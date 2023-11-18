@@ -2,6 +2,8 @@
 
 
 # Project Proposal: RPG Grid Map Adventure Game
+###Teammates
+Liangchun Ma, Fan Tang, Dongming Li, Zhiqiao Gong
 ### Overview
 This project aims to develop a role-playing game (RPG) set in a 16x16 grid map where the protagonist embarks on an adventurous journey. The game will feature a user interface (UI) that displays crucial information about the main character, such as health, coins, and other stats. As the character navigates through the grid, various events will be triggered upon entering specific tiles. These events could range from battles with monsters to choice-driven scenarios, like deciding whether to help others.
 
