@@ -1,0 +1,1 @@
+docker run -d --name cse230 cse230:v0.0 bash -c "sleep infinity"
