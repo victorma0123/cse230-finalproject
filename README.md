@@ -12,6 +12,9 @@ Develop the basic framework of the 16x16 grid map.
 Design and implement the UI for displaying character information.
 Create the main character with initial attributes and abilities.
 
+Update 12/1/2023
+Progress has been slightly delayed due to adapting to the new version of bricks. Upon reviewing the documentation for the new bricks version, we noticed that the mechanism for passing events and status has become more complex. Consequently, we've opted to use the older version of brick. The development environment setup using Docker has now been completed. 
+
 ### Milestone 2: Event Information Creation
 
 Design various types of events (e.g., battles, choices) that players can encounter.
@@ -63,5 +66,5 @@ stack build
 Run the built project:
 
 ```bash
-stach exec cse230-exe
+stack exec cse230-exe
 ```
