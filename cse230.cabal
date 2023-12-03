@@ -25,7 +25,7 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      Types
   other-modules:
       Paths_cse230
   autogen-modules:
@@ -35,12 +35,19 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
-    , brick ==1.9
+    , brick ==0.73
+    , containers
+    , linear
+    , microlens
+    , microlens-th
+    , random
+    , vty
   default-language: Haskell2010
 
-executable cse230-exe
+executable cse230
   main-is: Main.hs
   other-modules:
+      UI
       Paths_cse230
   autogen-modules:
       Paths_cse230
@@ -49,8 +56,14 @@ executable cse230-exe
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
-    , brick ==1.9
+    , brick ==0.73
+    , containers
     , cse230
+    , linear
+    , microlens
+    , microlens-th
+    , random
+    , vty
   default-language: Haskell2010
 
 test-suite cse230-test
@@ -65,6 +78,12 @@ test-suite cse230-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
-    , brick ==1.9
+    , brick ==0.73
+    , containers
     , cse230
+    , linear
+    , microlens
+    , microlens-th
+    , random
+    , vty
   default-language: Haskell2010
