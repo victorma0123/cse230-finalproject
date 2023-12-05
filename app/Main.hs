@@ -33,16 +33,9 @@ initialState =
     }
 
 main :: IO ()
-main =
-  do
+main = do
     eventChan <- Brick.BChan.newBChan 10
     let buildVty = V.mkVty V.defaultConfig
     initialVty <- buildVty
-    finalState <-
-      customMain
-        initialVty
-        buildVty
-        (Just eventChan)
-        app
-        initialState
+    finalState <- customMain initialVty buildVty (Just eventChan) app initialState
     return ()

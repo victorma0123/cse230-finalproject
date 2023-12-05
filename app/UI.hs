@@ -24,4 +24,8 @@ handleEvent g _ = continue g
 
 drawUI :: Game -> [Widget Name]
 drawUI g =
-  [str "Hello, world!"]
+  [ vBox
+      [ hBox [str "Map", str "Info"],
+        hBox [str "Message", str "Input"]
+      ]
+  ]
