@@ -8,7 +8,7 @@ import Brick
   )
 import Brick.BChan (newBChan)
 import qualified Graphics.Vty as V
-import Types
+import Types (Game(..), Name, Tick)
 import UI
 
 app :: App Game Tick Name
@@ -24,8 +24,8 @@ app =
 initialState :: Game
 initialState =
   Game
-    { x = 0,
-      y = 0,
+    { posX = 0,
+      posY = 0,
       sheild = 100,
       sword = 100,
       hp = 100,

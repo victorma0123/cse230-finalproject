@@ -7,8 +7,8 @@ module Types where
 
 -- | Game state
 data Game = Game
-  { x :: Int,
-    y :: Int,
+  { posX :: Int,
+    posY :: Int,
     sheild :: Int,
     sword :: Int,
     hp :: Int,
@@ -17,7 +17,6 @@ data Game = Game
   deriving (Show)
 
 -- Types
-
 -- | Ticks mark passing of time
 --
 -- This is our custom event that will be constantly fed into the app.
