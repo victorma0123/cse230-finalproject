@@ -11,6 +11,13 @@ packages:
       size: 6112
   original:
     hackage: brick-0.73
+- completed:
+    hackage: llvm-0.9.1.2@sha256:4a9a8c932b4d05c3f887943bf63a59fcc52effe468f1d2287fd74ee18c6c280b,3392
+    pantry-tree:
+      sha256: 34993f6e5d2495a03e30c646e3295040c6ce28568873d8cc6c6d3fb5392d5d29
+      size: 4473
+  original:
+    hackage: llvm-0.9.1.2
 snapshots:
 - completed:
     sha256: afd5ba64ab602cabc2d3942d3d7e7dd6311bc626dcb415b901eaf576cb62f0ea
