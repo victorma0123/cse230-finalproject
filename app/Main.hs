@@ -7,8 +7,9 @@ import Brick
     neverShowCursor,
   )
 import Brick.BChan (newBChan)
+import Brick.Widgets.Core
 import qualified Graphics.Vty as V
-import Types (Game(..), Name, Tick)
+import Types
 import UI
 
 app :: App Game Tick Name
@@ -29,13 +30,32 @@ initialState =
       sheild = 100,
       sword = 100,
       hp = 100,
-      attack = 100
+      attack = 100,
+      events = initialEvents
     }
+
+initialEvents :: [GameEvent]
+initialEvents =
+  [ GEvent
+      { eventX = 5,
+        eventY = 5,
+        name = "sleep",
+        choices =
+          [ GChoice
+              { title = "sleep for 10 hours"
+              },
+            GChoice
+              { title = "sleep for 5 hours"
+              }
+          ],
+        icon = str "s"
+      }
+  ]
 
 main :: IO ()
 main = do
-    eventChan <- Brick.BChan.newBChan 10
-    let buildVty = V.mkVty V.defaultConfig
-    initialVty <- buildVty
-    finalState <- customMain initialVty buildVty (Just eventChan) app initialState
-    return ()
+  eventChan <- Brick.BChan.newBChan 10
+  let buildVty = V.mkVty V.defaultConfig
+  initialVty <- buildVty
+  finalState <- customMain initialVty buildVty (Just eventChan) app initialState
+  return ()

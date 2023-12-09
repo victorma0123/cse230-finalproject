@@ -3,6 +3,8 @@
 
 module Types where
 
+import Brick (Widget)
+
 -- Types
 
 -- | Game state
@@ -12,11 +14,26 @@ data Game = Game
     sheild :: Int,
     sword :: Int,
     hp :: Int,
-    attack :: Int
+    attack :: Int,
+    events :: [GameEvent]
+  }
+
+data GameEvent = GEvent
+  { eventX :: Int,
+    eventY :: Int,
+    name :: String,
+    choices :: [EventChoice],
+    icon :: Widget Name
+  }
+
+data EventChoice = GChoice
+  { title :: String
+  -- other effects
   }
   deriving (Show)
 
 -- Types
+
 -- | Ticks mark passing of time
 --
 -- This is our custom event that will be constantly fed into the app.

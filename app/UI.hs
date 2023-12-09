@@ -25,7 +25,7 @@ import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Brick.Widgets.Core
 import qualified Graphics.Vty as V
-import Types (Game (..), Name, Tick)
+import Types
 
 -- global config
 -- this is because one column take less space than one row.
@@ -67,12 +67,6 @@ handleEvent g _ = continue g
 
 -- Drawing
 
--- string
-stringposition g = str $ "Press q to exit\n" ++ "X Position: " ++ show (posX g) ++ "  Y Position: " ++ show (posY g)
-
-setBoxSize :: Int -> Int -> Widget n -> Widget n
-setBoxSize w h wg = hLimit w $ vLimit h wg
-
 drawMap :: Game -> Widget Name
 drawMap g = vBox [createRow y g | y <- [0 .. gMapRows]] -- 生成地图的每一行
 
@@ -83,11 +77,22 @@ drawStatus g =
     <=> str ("HP: " ++ show (hp g))
     <=> str ("Attack: " ++ show (attack g))
 
-drawEvent :: p -> Widget n
+drawEvent :: Game -> Widget n
 drawEvent g =
-  str ("Event: " ++ "some event")
-    <=> str ("Choice 1: " ++ "some choice")
-    <=> str ("Choice 2: " ++ "some other choice")
+  case getEvent (posX g) (posY g) g of
+    Nothing -> str ""
+    (Just event) ->
+      str ("Event: " ++ name event)
+        <=> vBox [str ("Choice " ++ show i ++ ": " ++ title (choices event !! i)) | i <- [0 .. length (choices event) - 1]]
+
+getEvent :: Int -> Int -> Game -> Maybe GameEvent
+getEvent x y g = go (events g)
+  where
+    go [] = Nothing
+    go (e : es) =
+      if (eventX e == x) && (eventY e == y)
+        then Just e
+        else go es
 
 drawUI :: Game -> [Widget Name]
 drawUI g =
@@ -110,11 +115,14 @@ drawUI g =
 -- 创建地图的一行
 createRow :: Int -> Game -> Widget Name
 createRow y g =
-  let mapCells = [createCell x y g | x <- [0 .. gMapCols]] -- 生成一行中的每个格子
+  let mapCells = [setAvailableSize (gRow2Col, 1) $ center $ createCell x y g | x <- [0 .. gMapCols]] -- 生成一行中的每个格子
    in hBox mapCells
 
 -- 创建单个格子
 createCell :: Int -> Int -> Game -> Widget Name
 createCell x y g =
-  let content = if x == posX g && y == posY g then "Player" else "  " -- 根据游戏状态决定格子内容
-   in str content
+  if (posX g == x) && (posY g == y)
+    then str "."
+    else case getEvent x y g of
+      Nothing -> str " "
+      Just e -> icon e
