@@ -15,22 +15,24 @@ data Game = Game
     sword :: Int,
     hp :: Int,
     attack :: Int,
-    events :: [GameEvent]
+    events :: [GameEvent],
+    iChoice :: Int,
+    inEvent :: Maybe GameEvent
   }
 
 data GameEvent = GEvent
   { eventX :: Int,
     eventY :: Int,
     name :: String,
+    description :: String,
     choices :: [EventChoice],
     icon :: Widget Name
   }
 
 data EventChoice = GChoice
-  { title :: String
-  -- other effects
+  { title :: String,
+    effect :: Game -> Game
   }
-  deriving (Show)
 
 -- Types
 

@@ -31,7 +31,9 @@ initialState =
       sword = 100,
       hp = 100,
       attack = 100,
-      events = initialEvents
+      events = initialEvents,
+      iChoice = -1,
+      inEvent = Nothing
     }
 
 initialEvents :: [GameEvent]
@@ -40,12 +42,15 @@ initialEvents =
       { eventX = 5,
         eventY = 5,
         name = "sleep",
+        description = "Sleeping will help recover HP",
         choices =
           [ GChoice
-              { title = "sleep for 10 hours"
+              { title = "sleep for 10 hours",
+                effect = \g -> g {hp = hp g + 2}
               },
             GChoice
-              { title = "sleep for 5 hours"
+              { title = "sleep for 5 hours",
+                effect = \g -> g {hp = hp g + 1}
               }
           ],
         icon = str "s"

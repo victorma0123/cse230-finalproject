@@ -57,12 +57,48 @@ inf = 1000000
 -- Handling events
 
 handleEvent :: Game -> BrickEvent Name Tick -> EventM Name (Next Game)
-handleEvent g (VtyEvent (V.EvKey V.KEnter [])) = halt g
-handleEvent g (VtyEvent (V.EvKey (V.KChar 'w') [])) = continue $ g {posY = posY g - 1}
-handleEvent g (VtyEvent (V.EvKey (V.KChar 'a') [])) = continue $ g {posX = posX g - 1}
-handleEvent g (VtyEvent (V.EvKey (V.KChar 's') [])) = continue $ g {posY = posY g + 1}
-handleEvent g (VtyEvent (V.EvKey (V.KChar 'd') [])) = continue $ g {posX = posX g + 1}
+handleEvent g (VtyEvent (V.EvKey V.KEnter [])) = continue $
+  case inEvent g of
+    Nothing -> g
+    Just e -> effect (choices e !! iChoice g) g
+handleEvent g (VtyEvent (V.EvKey (V.KChar 'w') [])) =
+  continue $
+    g
+      { posY = posY g - 1,
+        inEvent = getEvent (posX g) (posY g - 1) g,
+        iChoice = 0
+      }
+handleEvent g (VtyEvent (V.EvKey (V.KChar 'a') [])) =
+  continue $
+    g
+      { posX = posX g - 1,
+        inEvent = getEvent (posX g - 1) (posY g) g,
+        iChoice = 0
+      }
+handleEvent g (VtyEvent (V.EvKey (V.KChar 's') [])) =
+  continue $
+    g
+      { posY = posY g + 1,
+        inEvent = getEvent (posX g) (posY g + 1) g,
+        iChoice = 0
+      }
+handleEvent g (VtyEvent (V.EvKey (V.KChar 'd') [])) =
+  continue $
+    g
+      { posX = posX g + 1,
+        inEvent = getEvent (posX g + 1) (posY g) g,
+        iChoice = 0
+      }
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'q') [])) = halt g
+handleEvent g (VtyEvent (V.EvKey V.KUp [])) = continue $ g {iChoice = max (iChoice g - 1) 0}
+handleEvent g (VtyEvent (V.EvKey V.KDown [])) =
+  continue $
+    g
+      { iChoice =
+          case inEvent g of
+            Nothing -> 0
+            Just e -> min (iChoice g + 1) (length (choices e) - 1)
+      }
 handleEvent g _ = continue g
 
 -- Drawing
@@ -79,11 +115,21 @@ drawStatus g =
 
 drawEvent :: Game -> Widget n
 drawEvent g =
-  case getEvent (posX g) (posY g) g of
+  case inEvent g of
     Nothing -> str ""
     (Just event) ->
       str ("Event: " ++ name event)
-        <=> vBox [str ("Choice " ++ show i ++ ": " ++ title (choices event !! i)) | i <- [0 .. length (choices event) - 1]]
+        <=> str (description event)
+        <=> vBox
+          [ ( if i == iChoice g
+                || (iChoice g < 0 && i == 0)
+                || (iChoice g >= length (choices event) && i == length (choices event) - 1)
+                then str "> "
+                else emptyWidget
+            )
+              <+> str ("Choice " ++ show i ++ ": " ++ title (choices event !! i))
+            | i <- [0 .. length (choices event) - 1]
+          ]
 
 getEvent :: Int -> Int -> Game -> Maybe GameEvent
 getEvent x y g = go (events g)
