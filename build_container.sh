@@ -1,1 +1,1 @@
-docker run -d --name cse230 cse230:v0.0 bash -c "sleep infinity"
+docker run -d --name cse230 cse230:v0.0 bash -c "sleep infinity" -v /Users/zhiqiaogong/Projects/haskell/cse230project/cse230-finalproject:/app

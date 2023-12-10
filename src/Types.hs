@@ -17,7 +17,8 @@ data Game = Game
     attack :: Int,
     events :: [GameEvent],
     iChoice :: Int,
-    inEvent :: Maybe GameEvent
+    inEvent :: Maybe GameEvent,
+    monsters :: [Monster]
   }
 
 data GameEvent = GEvent
@@ -33,6 +34,12 @@ data EventChoice = GChoice
   { title :: String,
     effect :: Game -> Game
   }
+
+data Monster = Monster
+  { monsterPosX :: Int,
+    monsterPosY :: Int
+    -- other attributes
+  } deriving (Eq, Show)
 
 -- Types
 

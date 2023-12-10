@@ -6,11 +6,15 @@ import Brick
     customMain,
     neverShowCursor,
   )
-import Brick.BChan (newBChan)
+import Brick.BChan (newBChan, writeBChan)
 import Brick.Widgets.Core
 import qualified Graphics.Vty as V
 import Types
 import UI
+import System.Random (randomRIO)
+import Control.Concurrent (forkIO, threadDelay)
+import Control.Monad (forever)
+import GameLogic (moveMonster, monsterEncounterEvent, treasureChest)
 
 app :: App Game Tick Name
 app =
@@ -33,7 +37,8 @@ initialState =
       attack = 100,
       events = initialEvents,
       iChoice = -1,
-      inEvent = Nothing
+      inEvent = Nothing,
+      monsters = [Monster 10 10, Monster 10 20]
     }
 
 initialEvents :: [GameEvent]
@@ -41,7 +46,7 @@ initialEvents =
   [ GEvent
       { eventX = 5,
         eventY = 5,
-        name = "sleep",
+        name = "sleep!",
         description = "Sleeping will help recover HP",
         choices =
           [ GChoice
@@ -54,13 +59,20 @@ initialEvents =
               }
           ],
         icon = str "s"
-      }
+      }, monsterEncounterEvent, treasureChest
   ]
 
 main :: IO ()
 main = do
-  eventChan <- Brick.BChan.newBChan 10
+  eventChan <- newBChan 10
+
+  -- Set up a background process for periodically sending Tick events
+  _ <- forkIO $ forever $ do
+    writeBChan eventChan Tick
+    threadDelay 3000000  -- 3 second intervals, adjust as needed
+
   let buildVty = V.mkVty V.defaultConfig
   initialVty <- buildVty
   finalState <- customMain initialVty buildVty (Just eventChan) app initialState
   return ()
+
