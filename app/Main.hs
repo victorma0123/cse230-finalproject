@@ -15,6 +15,8 @@ import System.Random (randomRIO)
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad (forever)
 import GameLogic (moveMonster, monsterEncounterEvent, treasureChest)
+import Init
+import Control.Monad
 
 app :: App Game Tick Name
 app =
@@ -25,42 +27,6 @@ app =
       appStartEvent = return,
       appAttrMap = const $ attrMap V.defAttr []
     }
-
-initialState :: Game
-initialState =
-  Game
-    { posX = 0,
-      posY = 0,
-      sheild = 100,
-      sword = 100,
-      hp = 100,
-      attack = 100,
-      events = initialEvents,
-      iChoice = -1,
-      inEvent = Nothing,
-      monsters = [Monster 10 10, Monster 10 20]
-    }
-
-initialEvents :: [GameEvent]
-initialEvents =
-  [ GEvent
-      { eventX = 5,
-        eventY = 5,
-        name = "sleep!",
-        description = "Sleeping will help recover HP",
-        choices =
-          [ GChoice
-              { title = "sleep for 10 hours",
-                effect = \g -> g {hp = hp g + 2}
-              },
-            GChoice
-              { title = "sleep for 5 hours",
-                effect = \g -> g {hp = hp g + 1}
-              }
-          ],
-        icon = str "s"
-      }, monsterEncounterEvent, treasureChest
-  ]
 
 main :: IO ()
 main = do
@@ -74,5 +40,6 @@ main = do
   let buildVty = V.mkVty V.defaultConfig
   initialVty <- buildVty
   finalState <- customMain initialVty buildVty (Just eventChan) app initialState
+  when (gameOver finalState) $ do
+    putStrLn "Game Over! Thank you for playing."
   return ()
-

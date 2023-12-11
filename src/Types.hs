@@ -18,7 +18,8 @@ data Game = Game
     events :: [GameEvent],
     iChoice :: Int,
     inEvent :: Maybe GameEvent,
-    monsters :: [Monster]
+    monsters :: [Monster],
+    gameOver :: Bool
   }
 
 data GameEvent = GEvent

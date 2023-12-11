@@ -24,16 +24,24 @@ fightChoice = GChoice { title = "Fight", effect = fightMonster }
 useItemChoice = GChoice { title = "Use Item", effect = useItem }
 fleeChoice = GChoice { title = "Flee", effect = flee }
 
+updateGameState :: Game -> Game
+updateGameState game =
+  if hp game <= 0
+  then game { gameOver = True }
+  else game
+
 fightMonster :: Game -> Game
 fightMonster game =
+  updateGameState $
   case inEvent game of
     Just currentEvent ->
       let monsterHp = 30
           monsterAttack = 20
           newPlayerHp = max 0 (hp game - monsterAttack)
           isMonsterDefeated = attack game >= monsterHp
+          gameOverUpdate = if hp game == 0 then True else False
           updatedEvents = if isMonsterDefeated then filter (gameEventsEqual currentEvent) (events game) else events game
-      in game { hp = newPlayerHp, events = updatedEvents }
+      in game { hp = newPlayerHp, events = updatedEvents , gameOver = gameOverUpdate}
     Nothing -> game
 
 
@@ -44,7 +52,7 @@ useItem game =
   in game { hp = newHp }
 
 flee :: Game -> Game
-flee game = game { hp = max 0 (hp game - 5) }
+flee game = game { hp = max 0 (hp game - 5), inEvent = Nothing }
 
 treasureChest :: GameEvent
 treasureChest = GEvent
