@@ -263,7 +263,7 @@ drawEvent g =
                 then str "> "
                 else emptyWidget
             )
-              <+> str ("Choice " ++ show i ++ ": " ++ title (choices event !! i))
+              <+> str ("Choice " ++ show (i+1) ++ ": " ++ title (choices event !! i))
             | i <- [0 .. length (choices event) - 1]
           ]
 

@@ -48,6 +48,7 @@ executable cse230
   main-is: Main.hs
   other-modules:
       GameLogic
+      Init
       UI
       Paths_cse230
   autogen-modules:
