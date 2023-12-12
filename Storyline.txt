@@ -1,0 +1,55 @@
+Initial Player Attributes:
+    HP: 100
+    Shield: 10 (reduces incoming damage by 10%)
+    Attack: 15
+    Sword: 10 (increases attack damage by 10%)
+
+Monsters:
+    Goblin Raider
+        HP: 30
+        Attack: 8
+        Bonus Gain: +5 Shield
+    Forest Nymph
+        HP: 20
+        Attack: 6
+        Bonus Gain: +3 Sword
+    Mountain Troll
+        HP: 50
+        Attack: 12
+        Bonus Gain: +10 HP
+    Shadow Assassin
+        HP: 35
+        Attack: 15
+        Bonus Gain: +4 Attack
+
+Events:
+
+    Ancient Shrine Encounter
+        Choices:
+            Offer Strength (Attack -3): Chance to gain a powerful weapon (Sword + 10).
+            Meditate: Increase your Shield by 5 points.
+
+    Mysterious Traveler
+        Choices:
+            Share a meal (HP -10): Gain a reliable ally (Shield + 10).
+            Train together: Boost your Attack by 3 points.
+    
+    Lost Treasure Chest
+        Choices:
+            Force open (Attack > 20): Find rare artifacts (+5 HP and +5 Shield).
+            Carefully unlock (Sword > 15): Gain a significant amount of gold.
+    
+    Enchanted Lake
+        Choices:
+            Bathe in the lake: Heal completely and gain extra 20 HP.
+            Search around the lake: Find hidden items (random bonus to Sword or Shield).
+    
+    The Ancient Library
+        Choices:
+            Study ancient tomes (requires high Sword): Learn powerful spells (increase Attack by 5 points).
+            Search for secret passages: Discover shortcuts or hidden areas on the map.
+    
+    Final Confrontation: The Dark Overlord's Lair
+        Trigger Condition: Player must have at least 150 HP, 20 Shield, 20 Attack, and 15 Sword.
+        Choices:
+            Direct assault: A challenging fight with high rewards (increased chance of victory with higher Shield and Attack).
