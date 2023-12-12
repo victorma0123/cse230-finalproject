@@ -10,7 +10,7 @@ import Brick.BChan (newBChan, writeBChan)
 import Brick.Widgets.Core
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad (forever)
-import GameLogic (monsterEncounterEvent, moveMonster, treasureChest)
+import GameLogic
 import qualified Graphics.Vty as V
 import System.Random (randomRIO)
 import Types
@@ -44,23 +44,7 @@ initialState =
 
 initialEvents :: [GameEvent]
 initialEvents =
-  [ GEvent
-      { eventX = 5,
-        eventY = 5,
-        name = "sleep!",
-        description = "Sleeping will help recover HP",
-        choices =
-          [ GChoice
-              { title = "sleep for 10 hours",
-                effect = \g -> g {hp = hp g + 2}
-              },
-            GChoice
-              { title = "sleep for 5 hours",
-                effect = \g -> g {hp = hp g + 1}
-              }
-          ],
-        icon = str "s"
-      },
+  [ sleepEvent,
     monsterEncounterEvent,
     treasureChest
   ]

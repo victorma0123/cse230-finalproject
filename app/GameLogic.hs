@@ -10,11 +10,29 @@ import Types
 -- gameMonsterEqual to remove the defeated monter, two monsters will
 -- all be removed.
 -- TODO: fix the corner case
-gameMonsterEqual :: Monster -> Monster -> Bool
-gameMonsterEqual m1 m2 =
-  monsterPosX m1 == monsterPosX m2
-    && monsterPosY m1 == monsterPosY m2
 
+-- Sleep Event
+sleepEvent :: GameEvent
+sleepEvent =
+  GEvent
+      { eventX = 5,
+        eventY = 5,
+        name = "sleep!",
+        description = "Sleeping will help recover HP",
+        choices =
+          [ GChoice
+              { title = "sleep for 10 hours",
+                effect = \g -> g {hp = hp g + 2}
+              },
+            GChoice
+              { title = "sleep for 5 hours",
+                effect = \g -> g {hp = hp g + 1}
+              }
+          ],
+        icon = str "s"
+      }
+
+-- Monster Encounter
 monsterEncounterEvent :: GameEvent
 monsterEncounterEvent =
   GEvent
@@ -25,6 +43,11 @@ monsterEncounterEvent =
       choices = [fightChoice, useItemChoice, fleeChoice],
       icon = str "M"
     }
+
+gameMonsterEqual :: Monster -> Monster -> Bool
+gameMonsterEqual m1 m2 =
+  monsterPosX m1 == monsterPosX m2
+    && monsterPosY m1 == monsterPosY m2
 
 fightChoice :: EventChoice
 fightChoice = GChoice {title = "Fight", effect = fightMonster}
@@ -73,6 +96,19 @@ useItem game =
 flee :: Game -> Game
 flee game = game {hp = max 0 (hp game - 5), inEvent = Nothing}
 
+moveMonster :: Monster -> Int -> Int -> IO Monster
+moveMonster monster mapWidth mapHeight = do
+  direction <- randomRIO (1, 4) :: IO Int
+  let (dx, dy) = case direction of
+        1 -> (0, 1) -- Move up
+        2 -> (0, -1) -- Move down
+        3 -> (-1, 0) -- Move left
+        4 -> (1, 0) -- Move right
+      newX = max 0 $ min (mapWidth - 1) $ monsterPosX monster + dx
+      newY = max 0 $ min (mapHeight - 1) $ monsterPosY monster + dy
+  return $ monster {monsterPosX = newX, monsterPosY = newY}
+
+-- Treasure Chest
 treasureChest :: GameEvent
 treasureChest =
   GEvent
@@ -104,14 +140,4 @@ openChest game =
     shieldBonus = 15
     trapDamage = 10
 
-moveMonster :: Monster -> Int -> Int -> IO Monster
-moveMonster monster mapWidth mapHeight = do
-  direction <- randomRIO (1, 4) :: IO Int
-  let (dx, dy) = case direction of
-        1 -> (0, 1) -- Move up
-        2 -> (0, -1) -- Move down
-        3 -> (-1, 0) -- Move left
-        4 -> (1, 0) -- Move right
-      newX = max 0 $ min (mapWidth - 1) $ monsterPosX monster + dx
-      newY = max 0 $ min (mapHeight - 1) $ monsterPosY monster + dy
-  return $ monster {monsterPosX = newX, monsterPosY = newY}
+
