@@ -255,7 +255,7 @@ getEvent x y game = find (\e -> eventX e == x && eventY e == y) (events game)
 renderMountain :: Int -> Int -> Game -> Maybe (Widget Name)
 renderMountain x y game =
   if isMountainAt x y game
-  then Just $ str "X"  -- 用 "N" 表示山脉
+  then Just $ str "⛰"  -- 用 "⛰" 表示山脉
   else Nothing
 
 isMountainAt :: Int -> Int -> Game -> Bool
