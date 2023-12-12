@@ -30,6 +30,8 @@ import GameLogic (monsterEncounterEvent, moveMonster)
 import qualified Graphics.Vty as V
 import Init
 import Types
+import Brick.AttrMap (AttrMap, attrMap,AttrName, attrName)
+import Brick.Util (on, fg)
 
 -- global config
 -- this is because one column take less space than one row.
@@ -56,6 +58,14 @@ gBarHeight = 6
 inf :: Int
 inf = 1000000
 
+-- 定义绿色属性
+greenAttr :: AttrName
+greenAttr = attrName "green"
+
+-- 在 attrMap 中添加您的新属性
+theMap :: AttrMap
+theMap = attrMap V.defAttr
+    [ (greenAttr, fg V.green) ]
 -- Handling events
 
 handleEvent :: Game -> BrickEvent Name Tick -> EventM Name (Next Game)
@@ -152,8 +162,8 @@ isEngagedInEvent monster game =
 renderMonster :: Int -> Int -> Game -> Maybe (Widget Name)
 renderMonster x y game =
   if isMonsterAt x y game
-    then Just $ str "M"
-    else Nothing
+  then Just $ str "M"  -- 使用怪物面孔 Unicode 字符
+  else Nothing
 
 isMonsterAt :: Int -> Int -> Game -> Bool
 isMonsterAt x y game = any (\m -> monsterPosX m == x && monsterPosY m == y) (monsters game)
@@ -247,8 +257,8 @@ getEvent x y game = find (\e -> eventX e == x && eventY e == y) (events game)
 renderMountain :: Int -> Int -> Game -> Maybe (Widget Name)
 renderMountain x y game =
   if isMountainAt x y game
-    then Just $ str "⛰" -- 用 "⛰" 表示山脉
-    else Nothing
+  then Just $ withAttr greenAttr $ str "⛰" -- 用 "⛰" 表示山脉，并应用绿色属性
+  else Nothing
 
 isMountainAt :: Int -> Int -> Game -> Bool
 isMountainAt x y game = any (\m -> mountainPosX m == x && mountainPosY m == y) (mountains game)

@@ -25,7 +25,7 @@ app =
       appChooseCursor = neverShowCursor,
       appHandleEvent = handleEvent,
       appStartEvent = return,
-      appAttrMap = const $ attrMap V.defAttr []
+      appAttrMap = const theMap 
     }
 
 main :: IO ()
