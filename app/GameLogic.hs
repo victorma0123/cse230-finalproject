@@ -96,17 +96,21 @@ useItem game =
 flee :: Game -> Game
 flee game = game {hp = max 0 (hp game - 5), inEvent = Nothing}
 
-moveMonster :: Monster -> Int -> Int -> IO Monster
-moveMonster monster mapWidth mapHeight = do
+moveMonster :: Monster -> Game -> IO Monster
+moveMonster monster game = do
   direction <- randomRIO (1, 4) :: IO Int
   let (dx, dy) = case direction of
         1 -> (0, 1) -- Move up
         2 -> (0, -1) -- Move down
         3 -> (-1, 0) -- Move left
         4 -> (1, 0) -- Move right
-      newX = max 0 $ min (mapWidth - 1) $ monsterPosX monster + dx
-      newY = max 0 $ min (mapHeight - 1) $ monsterPosY monster + dy
-  return $ monster {monsterPosX = newX, monsterPosY = newY}
+      newX = monsterPosX monster + dx
+      newY = monsterPosY monster + dy
+      isMountain = any (\m -> mountainPosX m == newX && mountainPosY m == newY) (mountains game)
+  if isMountain
+    then return monster -- 如果新位置有山脉，怪物保持不动
+    else return $ monster {monsterPosX = newX, monsterPosY = newY}
+
 
 -- Treasure Chest
 treasureChest :: GameEvent
@@ -117,7 +121,7 @@ treasureChest =
       name = "Treasure Chest",
       description = "You've found a treasure chest!",
       choices = [openChestChoice],
-      icon = str "T"
+      icon = str "✩"
     }
 
 openChestChoice :: EventChoice

@@ -104,10 +104,10 @@ handleEvent g (VtyEvent (V.EvKey (V.KChar char) [])) = continue $
     Nothing -> g
 -- Locking monster when meeting with player
 handleEvent g (AppEvent Tick) = do
-  let mapWidth = gMapCols
-      mapHeight = gMapRows
   -- Move monsters only if they are not in an event with the player
-  newMonsters <- liftIO $ mapM (\m -> if isEngagedInEvent m g then return m else moveMonster m mapWidth mapHeight) (monsters g)
+  newMonsters <- liftIO $ mapM (\m -> if isEngagedInEvent m g 
+                                      then return m 
+                                      else moveMonster m g) (monsters g)
   let updatedGame = checkForEncounters g {monsters = newMonsters}
   continue updatedGame
 handleEvent g _ = continue g
@@ -162,7 +162,7 @@ isEngagedInEvent monster game =
 renderMonster :: Int -> Int -> Game -> Maybe (Widget Name)
 renderMonster x y game =
   if isMonsterAt x y game
-  then Just $ str "M"  -- 使用怪物面孔 Unicode 字符
+  then Just $ str "🀃"  -- 使用怪物面孔 Unicode 字符
   else Nothing
 
 isMonsterAt :: Int -> Int -> Game -> Bool
@@ -236,7 +236,7 @@ createCell x y g =
         Just monsterWidget -> monsterWidget
         Nothing ->
           if (posX g == x) && (posY g == y)
-            then str "." -- 用 "." 表示玩家
+            then str "☺️" -- 用 "☺️" 表示玩家
             else case getEvent x y g of
               Nothing -> str " " -- 空白表示空单元格
               Just e -> icon e -- 用事件的图标表示事件

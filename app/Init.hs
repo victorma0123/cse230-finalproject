@@ -39,7 +39,7 @@ initialState =
       monsters = [Monster 10 10, Monster 20 10],
       inMonster = Nothing,
       gameOver = False,
-      mountains = [Mountain 1 2, Mountain 1 3, Mountain 1 4, Mountain 1 5, Mountain 2 5]
+      mountains = [Mountain 1 2, Mountain 1 3, Mountain 1 4, Mountain 1 5, Mountain 2 5, Mountain 10 11, Mountain 11 10]
     }
 
 initialEvents :: [GameEvent]
