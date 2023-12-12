@@ -19,6 +19,10 @@ data Game = Game
     iChoice :: Int,
     inEvent :: Maybe GameEvent,
     monsters :: [Monster],
+    -- track the position of the monster
+    -- that we are facing so that we can remove
+    -- it after it is defeated
+    inMonster :: Maybe Monster,
     gameOver :: Bool,
     mountains :: [Mountain]
   }
@@ -41,12 +45,14 @@ data Monster = Monster
   { monsterPosX :: Int,
     monsterPosY :: Int
     -- other attributes
-  } deriving (Eq, Show)
+  }
+  deriving (Eq, Show)
 
 data Mountain = Mountain
   { mountainPosX :: Int,
     mountainPosY :: Int
-  } deriving (Eq, Show)
+  }
+  deriving (Eq, Show)
 
 -- Types
 
