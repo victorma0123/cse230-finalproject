@@ -8,12 +8,21 @@ import Brick
   )
 import Brick.BChan (newBChan, writeBChan)
 import Brick.Widgets.Core
-import qualified Graphics.Vty as V
-import Types
-import System.Random (randomRIO)
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad (forever)
-import GameLogic (moveMonster, monsterEncounterEvent, treasureChest)
+import GameLogic (monsterEncounterEvent, moveMonster, treasureChest)
+import qualified Graphics.Vty as V
+import System.Random (randomRIO)
+import Types
+
+-- The coordinates in the game. For now, the x axis is from left to right,
+-- and the y axis is from top to buttom.
+--   -----------------------x axis--------------------
+--   | ......
+--   | ......
+-- y axis
+--   | ......
+--   | ......
 
 initialState :: Game
 initialState =
@@ -27,9 +36,10 @@ initialState =
       events = initialEvents,
       iChoice = -1,
       inEvent = Nothing,
-      monsters = [Monster 10 10, Monster 10 20],
+      monsters = [Monster 10 10, Monster 20 10],
+      inMonster = Nothing,
       gameOver = False,
-      mountains = [Mountain 1 2,Mountain 1 3,Mountain 1 4,Mountain 1 5, Mountain 2 5]
+      mountains = [Mountain 1 2, Mountain 1 3, Mountain 1 4, Mountain 1 5, Mountain 2 5]
     }
 
 initialEvents :: [GameEvent]
@@ -50,5 +60,7 @@ initialEvents =
               }
           ],
         icon = str "s"
-      }, monsterEncounterEvent, treasureChest
+      },
+    monsterEncounterEvent,
+    treasureChest
   ]

@@ -1,82 +1,104 @@
 module GameLogic where
 
-import Types
-import System.Random (randomRIO)
 import Brick (str)
+import System.Random (randomRIO)
+import Types
 
-gameEventsEqual :: GameEvent -> GameEvent -> Bool
-gameEventsEqual e1 e2 = 
-  eventX e1 == eventX e2 &&
-  eventY e1 == eventY e2 &&
-  name e1 == name e2
+-- current implementation only checks whether two monsters are at the
+-- same position. An corner case is that two (different) monster may
+-- randomly walk to the same position. And in that case, when calling
+-- gameMonsterEqual to remove the defeated monter, two monsters will
+-- all be removed.
+-- TODO: fix the corner case
+gameMonsterEqual :: Monster -> Monster -> Bool
+gameMonsterEqual m1 m2 =
+  monsterPosX m1 == monsterPosX m2
+    && monsterPosY m1 == monsterPosY m2
 
 monsterEncounterEvent :: GameEvent
-monsterEncounterEvent = GEvent
-  { eventX = -1,
-    eventY = -1,
-    name = "Monster Encounter",
-    description = "A wild creature appears!",
-    choices = [fightChoice, useItemChoice, fleeChoice],
-    icon = str "M" 
-  }
+monsterEncounterEvent =
+  GEvent
+    { eventX = -1,
+      eventY = -1,
+      name = "Monster Encounter",
+      description = "A wild creature appears!",
+      choices = [fightChoice, useItemChoice, fleeChoice],
+      icon = str "M"
+    }
 
-fightChoice = GChoice { title = "Fight", effect = fightMonster }
-useItemChoice = GChoice { title = "Use Item", effect = useItem }
-fleeChoice = GChoice { title = "Flee", effect = flee }
+fightChoice :: EventChoice
+fightChoice = GChoice {title = "Fight", effect = fightMonster}
+
+useItemChoice :: EventChoice
+useItemChoice = GChoice {title = "Use Item", effect = useItem}
+
+fleeChoice :: EventChoice
+fleeChoice = GChoice {title = "Flee", effect = flee}
 
 updateGameState :: Game -> Game
 updateGameState game =
   if hp game <= 0
-  then game { gameOver = True }
-  else game
+    then game {gameOver = True}
+    else game
 
 fightMonster :: Game -> Game
 fightMonster game =
   updateGameState $
-  case inEvent game of
-    Just currentEvent ->
-      let monsterHp = 30
-          monsterAttack = 20
-          newPlayerHp = max 0 (hp game - monsterAttack)
-          isMonsterDefeated = attack game >= monsterHp
-          gameOverUpdate = if hp game == 0 then True else False
-          updatedEvents = if isMonsterDefeated then filter (gameEventsEqual currentEvent) (events game) else events game
-      in game { hp = newPlayerHp, events = updatedEvents , gameOver = gameOverUpdate}
-    Nothing -> game
-
+    case inMonster game of
+      Just monster ->
+        let monsterHp = 30
+            monsterAttack = 20
+            newPlayerHp = max 0 (hp game - monsterAttack)
+            isMonsterDefeated = attack game >= monsterHp
+            gameOverUpdate = hp game == 0
+            -- remove the defeated monster (not the monster event!)
+            -- Ideally, we can add a type in event to indicate this is an monster (that can move!).
+            -- Then we can remove the corresponding event for the monster
+            -- But in current code, monsters are represented as another type (Monster), which all share
+            -- the same monsterEncounterEvent (which will not be rendered in the map).
+            -- To remove a monster in map, we need to remove it from the monsters, not events.
+            remainMonsters = if isMonsterDefeated then filter (not . gameMonsterEqual monster) (monsters game) else monsters game
+            -- also set inEvent to Nothing, otherwise, even if the monster is defeated, the UI (event bar) will not be updated
+            -- TODO: fix the corner case, where multiple monsters are at the same position. In that case, we cannot set inEvent to Nothing
+            evt = if isMonsterDefeated then Nothing else inEvent game
+         in game {hp = newPlayerHp, monsters = remainMonsters, gameOver = gameOverUpdate, inEvent = evt}
+      Nothing -> game
 
 useItem :: Game -> Game
 useItem game =
   let healthPotionEffect = 20
       newHp = min 100 (hp game + healthPotionEffect)
-  in game { hp = newHp }
+   in game {hp = newHp}
 
 flee :: Game -> Game
-flee game = game { hp = max 0 (hp game - 5), inEvent = Nothing }
+flee game = game {hp = max 0 (hp game - 5), inEvent = Nothing}
 
 treasureChest :: GameEvent
-treasureChest = GEvent
-  { eventX = 15,
-    eventY = 15,
-    name = "Treasure Chest",
-    description = "You've found a treasure chest!",
-    choices = [openChestChoice],
-    icon = str "T"
-  }
+treasureChest =
+  GEvent
+    { eventX = 15,
+      eventY = 15,
+      name = "Treasure Chest",
+      description = "You've found a treasure chest!",
+      choices = [openChestChoice],
+      icon = str "T"
+    }
 
 openChestChoice :: EventChoice
-openChestChoice = GChoice 
-  { title = "Open Chest",
-    effect = openChest
-  }
+openChestChoice =
+  GChoice
+    { title = "Open Chest",
+      effect = openChest
+    }
 
 openChest :: Game -> Game
 openChest game =
-  if even (posX game + posY game)  -- Using player's position to determine the outcome
-    then game { hp = min 100 (hp game + healthBonus) } -- Even position sums give health
-    else if posX game `mod` 3 == 0
-         then game { sheild = min 100 (sheild game + shieldBonus) } -- Position x divisible by 3 gives shield
-         else game { hp = max 0 (hp game - trapDamage) } -- Other positions are traps
+  if even (posX game + posY game) -- Using player's position to determine the outcome
+    then game {hp = min 150 (hp game + healthBonus)} -- Even position sums give health
+    else
+      if posX game `mod` 3 == 0
+        then game {sheild = min 100 (sheild game + shieldBonus)} -- Position x divisible by 3 gives shield
+        else game {hp = max 0 (hp game - trapDamage)} -- Other positions are traps
   where
     healthBonus = 20
     shieldBonus = 15
@@ -86,10 +108,10 @@ moveMonster :: Monster -> Int -> Int -> IO Monster
 moveMonster monster mapWidth mapHeight = do
   direction <- randomRIO (1, 4) :: IO Int
   let (dx, dy) = case direction of
-        1 -> (0, 1)  -- Move up
+        1 -> (0, 1) -- Move up
         2 -> (0, -1) -- Move down
         3 -> (-1, 0) -- Move left
-        4 -> (1, 0)  -- Move right
+        4 -> (1, 0) -- Move right
       newX = max 0 $ min (mapWidth - 1) $ monsterPosX monster + dx
       newY = max 0 $ min (mapHeight - 1) $ monsterPosY monster + dy
-  return $ monster { monsterPosX = newX, monsterPosY = newY }
+  return $ monster {monsterPosX = newX, monsterPosY = newY}
