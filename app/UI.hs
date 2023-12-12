@@ -133,12 +133,12 @@ movePlayerHelper (dx, dy) game =
 
 movePlayer :: (Int, Int) -> Game -> Game
 movePlayer (dx, dy) game =
-  case inEvent game of
-    Just event ->
-      if isMonsterEncounter game
-      then game  -- Prevent movement in a monster encounter
-      else movePlayerHelper (dx, dy) game
-    Nothing -> movePlayerHelper (dx, dy) game
+  let newX = posX game + dx
+      newY = posY game + dy
+      isMountain = any (\m -> mountainPosX m == newX && mountainPosY m == newY) (mountains game)
+  in if isMountain
+     then game  -- 如果新位置有山脉，则不移动玩家
+     else movePlayerHelper (dx, dy) game
 
 
 charToChoiceIndex :: Char -> Int
@@ -225,14 +225,18 @@ createRow y g =
 -- Create cells in map
 createCell :: Int -> Int -> Game -> Widget Name
 createCell x y g =
-  case renderMonster x y g of
-    Just monsterWidget -> monsterWidget
-    Nothing -> 
-      if (posX g == x) && (posY g == y)
-        then str "."
-        else case getEvent x y g of
-          Nothing -> str " "
-          Just e -> icon e
+  case renderMountain x y g of
+    Just mountainWidget -> mountainWidget
+    Nothing ->
+      case renderMonster x y g of
+        Just monsterWidget -> monsterWidget
+        Nothing ->
+          if (posX g == x) && (posY g == y)
+          then str "."  -- 用 "." 表示玩家
+          else case getEvent x y g of
+            Nothing -> str " "  -- 空白表示空单元格
+            Just e -> icon e  -- 用事件的图标表示事件
+
 
 -- Status Bar
 drawStatus :: Game -> Widget n
@@ -247,6 +251,15 @@ drawStatus g =
 getEvent :: Int -> Int -> Game -> Maybe GameEvent
 getEvent x y game = find (\e -> eventX e == x && eventY e == y) (events game)
 
+
+renderMountain :: Int -> Int -> Game -> Maybe (Widget Name)
+renderMountain x y game =
+  if isMountainAt x y game
+  then Just $ str "X"  -- 用 "N" 表示山脉
+  else Nothing
+
+isMountainAt :: Int -> Int -> Game -> Bool
+isMountainAt x y game = any (\m -> mountainPosX m == x && mountainPosY m == y) (mountains game)
 
 -- Event Bar
 drawEvent :: Game -> Widget n

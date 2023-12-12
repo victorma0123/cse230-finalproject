@@ -19,7 +19,8 @@ data Game = Game
     iChoice :: Int,
     inEvent :: Maybe GameEvent,
     monsters :: [Monster],
-    gameOver :: Bool
+    gameOver :: Bool,
+    mountains :: [Mountain]
   }
 
 data GameEvent = GEvent
@@ -40,6 +41,11 @@ data Monster = Monster
   { monsterPosX :: Int,
     monsterPosY :: Int
     -- other attributes
+  } deriving (Eq, Show)
+
+data Mountain = Mountain
+  { mountainPosX :: Int,
+    mountainPosY :: Int
   } deriving (Eq, Show)
 
 -- Types

@@ -28,7 +28,8 @@ initialState =
       iChoice = -1,
       inEvent = Nothing,
       monsters = [Monster 10 10, Monster 10 20],
-      gameOver = False
+      gameOver = False,
+      mountains = [Mountain 1 2,Mountain 1 3,Mountain 1 4,Mountain 1 5, Mountain 2 5]
     }
 
 initialEvents :: [GameEvent]
