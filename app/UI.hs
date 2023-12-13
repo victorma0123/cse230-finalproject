@@ -20,18 +20,18 @@ import Brick
     (<+>),
     (<=>),
   )
+import Brick.AttrMap (AttrMap, AttrName, attrMap, attrName)
+import Brick.Util (fg, on)
 import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Brick.Widgets.Core
 import Control.Monad.IO.Class (liftIO)
 import Data.List (find)
-import GameLogic 
+import GameLogic
 import qualified Graphics.Vty as V
 import Init
 import Types
-import Brick.AttrMap (AttrMap, attrMap,AttrName, attrName)
-import Brick.Util (on, fg)
 
 -- global config
 -- this is because one column take less space than one row.
@@ -64,8 +64,11 @@ greenAttr = attrName "green"
 
 -- 在 attrMap 中添加您的新属性
 theMap :: AttrMap
-theMap = attrMap V.defAttr
-    [ (greenAttr, fg V.green) ]
+theMap =
+  attrMap
+    V.defAttr
+    [(greenAttr, fg V.green)]
+
 -- Handling events
 
 handleEvent :: Game -> BrickEvent Name Tick -> EventM Name (Next Game)
@@ -105,9 +108,15 @@ handleEvent g (VtyEvent (V.EvKey (V.KChar char) [])) = continue $
 -- Locking monster when meeting with player
 handleEvent g (AppEvent Tick) = do
   -- Move monsters only if they are not in an event with the player
-  newMonsters <- liftIO $ mapM (\m -> if isEngagedInEvent m g 
-                                      then return m 
-                                      else moveMonster m g) (monsters g)
+  newMonsters <-
+    liftIO $
+      mapM
+        ( \m ->
+            if isEngagedInEvent m g
+              then return m
+              else moveMonster m g
+        )
+        (monsters g)
   let updatedGame = checkForEncounters g {monsters = newMonsters}
   continue updatedGame
 handleEvent g _ = continue g
@@ -132,7 +141,7 @@ movePlayerHelper (dx, dy) game =
       maybeMonster = getMonsterAt newX newY game
       maybeEvent = getEvent newX newY game
       newInEvent = case maybeMonster of
-        Just _ -> Just goblinRaiderEvent
+        Just m -> Just $ getMonsterEvent (monsterName m)
         Nothing -> maybeEvent
    in -- we can always safely set choice index to 0 when we move to a new cell
       game {posX = newX, posY = newY, inEvent = newInEvent, iChoice = 0, inMonster = maybeMonster}
@@ -151,13 +160,12 @@ movePlayer (dx, dy) game =
   case inEvent game of
     Just event ->
       if isMonsterEncounter game
-      then game  -- Prevent movement in a monster encounter
-      else movePlayerMountain (dx, dy) game
+        then game -- Prevent movement in a monster encounter
+        else movePlayerMountain (dx, dy) game
     Nothing -> movePlayerMountain (dx, dy) game
 
 charToChoiceIndex :: Char -> Int
 charToChoiceIndex char = fromEnum char - fromEnum '1'
-
 
 checkForEncounters :: Game -> Game
 checkForEncounters game =
@@ -165,15 +173,13 @@ checkForEncounters game =
     Just monster -> game {inEvent = Just (getMonsterEvent (monsterName monster))}
     Nothing -> game -- No changes if no encounters
 
-
 getMonsterEvent :: String -> GameEvent
-getMonsterEvent monsterName = 
+getMonsterEvent monsterName =
   case monsterName of
     "Goblin Raider" -> goblinRaiderEvent
     "Forest Nymph" -> forestNymphEvent
     "Mountain Troll" -> mountainTrollEvent
     "Shadow Assassin" -> shadowAssassinEvent
-
 
 isEngagedInEvent :: Monster -> Game -> Bool
 isEngagedInEvent monster game =
@@ -187,12 +193,11 @@ renderMonster x y game =
 
 monsterIcon :: String -> String
 monsterIcon name = case name of
-  "Goblin Raider" -> "🀀"  -- Example icon for Goblin Raider
-  "Forest Nymph" -> "🀁"   -- Example icon for Forest Nymph
+  "Goblin Raider" -> "🀀" -- Example icon for Goblin Raider
+  "Forest Nymph" -> "🀁" -- Example icon for Forest Nymph
   "Mountain Troll" -> "🀂" -- Example icon for Mountain Troll
   "Shadow Assassin" -> "🀃" -- Example icon for Shadow Assassin
   _ -> "🀅" -- Default icon for other monsters
-
 
 isMonsterAt :: Int -> Int -> Game -> Bool
 isMonsterAt x y game = any (\m -> monsterPosX m == x && monsterPosY m == y) (monsters game)
@@ -261,8 +266,8 @@ createCell x y g =
   case renderMountain x y g of
     Just mountainWidget -> mountainWidget
     Nothing ->
-      case renderMonster x y g of
-        Just monsterWidget -> monsterWidget
+      case getMonsterAt x y g of
+        Just monster -> str (show (monsterHp monster))
         Nothing ->
           if (posX g == x) && (posY g == y)
             then str "☺️" -- 用 "☺️" 表示玩家
@@ -286,8 +291,8 @@ getEvent x y game = find (\e -> eventX e == x && eventY e == y) (events game)
 renderMountain :: Int -> Int -> Game -> Maybe (Widget Name)
 renderMountain x y game =
   if isMountainAt x y game
-  then Just $ withAttr greenAttr $ str "⛰" -- 用 "⛰" 表示山脉，并应用绿色属性
-  else Nothing
+    then Just $ withAttr greenAttr $ str "⛰" -- 用 "⛰" 表示山脉，并应用绿色属性
+    else Nothing
 
 isMountainAt :: Int -> Int -> Game -> Bool
 isMountainAt x y game = any (\m -> mountainPosX m == x && mountainPosY m == y) (mountains game)
