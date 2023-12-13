@@ -44,7 +44,9 @@ data EventChoice = GChoice
 data Monster = Monster
   { monsterPosX :: Int,
     monsterPosY :: Int,
-    monsterName :: String
+    monsterName :: String,
+    monsterHp :: Int,
+    monsterAttack :: Int
     -- other attributes
   }
   deriving (Eq, Show)

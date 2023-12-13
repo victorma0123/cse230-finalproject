@@ -137,8 +137,8 @@ movePlayerHelper (dx, dy) game =
    in -- we can always safely set choice index to 0 when we move to a new cell
       game {posX = newX, posY = newY, inEvent = newInEvent, iChoice = 0, inMonster = maybeMonster}
 
-movePlayer :: (Int, Int) -> Game -> Game
-movePlayer (dx, dy) game =
+movePlayerMountain :: (Int, Int) -> Game -> Game
+movePlayerMountain (dx, dy) game =
   let newX = posX game + dx
       newY = posY game + dy
       isMountain = any (\m -> mountainPosX m == newX && mountainPosY m == newY) (mountains game)
@@ -146,16 +146,18 @@ movePlayer (dx, dy) game =
         then game -- 如果新位置有山脉，则不移动玩家
         else movePlayerHelper (dx, dy) game
 
+movePlayer :: (Int, Int) -> Game -> Game
+movePlayer (dx, dy) game =
+  case inEvent game of
+    Just event ->
+      if isMonsterEncounter game
+      then game  -- Prevent movement in a monster encounter
+      else movePlayerMountain (dx, dy) game
+    Nothing -> movePlayerMountain (dx, dy) game
+
 charToChoiceIndex :: Char -> Int
 charToChoiceIndex char = fromEnum char - fromEnum '1'
 
-{-
-checkForEncounters :: Game -> Game
-checkForEncounters game =
-  if any (\m -> monsterPosX m == posX game && monsterPosY m == posY game) (monsters game)
-    then game {inEvent = Just goblinRaiderEvent} -- Trigger monster encounter
-    else game -- No changes if no encounters
--}
 
 checkForEncounters :: Game -> Game
 checkForEncounters game =
@@ -173,16 +175,24 @@ getMonsterEvent monsterName =
     "Shadow Assassin" -> shadowAssassinEvent
 
 
-
 isEngagedInEvent :: Monster -> Game -> Bool
 isEngagedInEvent monster game =
   monsterPosX monster == posX game && monsterPosY monster == posY game
 
 renderMonster :: Int -> Int -> Game -> Maybe (Widget Name)
 renderMonster x y game =
-  if isMonsterAt x y game
-  then Just $ str "🀃"  -- 使用怪物面孔 Unicode 字符
-  else Nothing
+  case getMonsterAt x y game of
+    Just monster -> Just $ str $ monsterIcon (monsterName monster)
+    Nothing -> Nothing
+
+monsterIcon :: String -> String
+monsterIcon name = case name of
+  "Goblin Raider" -> "🀀"  -- Example icon for Goblin Raider
+  "Forest Nymph" -> "🀁"   -- Example icon for Forest Nymph
+  "Mountain Troll" -> "🀂" -- Example icon for Mountain Troll
+  "Shadow Assassin" -> "🀃" -- Example icon for Shadow Assassin
+  _ -> "🀅" -- Default icon for other monsters
+
 
 isMonsterAt :: Int -> Int -> Game -> Bool
 isMonsterAt x y game = any (\m -> monsterPosX m == x && monsterPosY m == y) (monsters game)

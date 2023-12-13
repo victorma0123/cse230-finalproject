@@ -98,32 +98,35 @@ updateGameState game =
     then game {gameOver = True}
     else game
 
+updateMonstersInGame :: [Monster] -> Game -> Game
+updateMonstersInGame m game = game {monsters = m}
+
 fightMonster :: Game -> Game
 fightMonster game =
   updateGameState $
     case inMonster game of
       Just monster ->
-        let (monsterHp, monsterAttack, bonusGain) = case monsterName monster of
-              "Goblin Raider" -> (30, 8, ShieldBonus 5)
-              "Forest Nymph" -> (20, 6, SwordBonus 3)
-              "Mountain Troll" -> (50, 12, HPBonus 10)
-              "Shadow Assassin" -> (35, 15, AttackBonus 4)
-              _ -> (0, 0, NoBonus) -- Default case
-            newPlayerHp = max 0 (hp game - monsterAttack)
-            isMonsterDefeated = attack game >= 0
+        let currentMonster = monster
+            newPlayerHp = max 0 (hp game - monsterAttack monster)
+            newMonsterHp = max 0 (monsterHp monster - attack game)
+            updatedMonster = monster {monsterHp = newMonsterHp}
+            updatedMonsters = replaceMonsterInList monster updatedMonster (monsters game)
+            gameUpdatedMonster = game {monsters = updatedMonsters} 
+            isMonsterDefeated = newMonsterHp <= 0
+            finalMonsters = if isMonsterDefeated then filter (not . gameMonsterEqual monster) updatedMonsters else monsters game
             gameOverUpdate = hp game == 0
+            bonusGain = getBonusForMonster (monsterName monster)
             -- remove the defeated monster (not the monster event!)
             -- Ideally, we can add a type in event to indicate this is an monster (that can move!).
             -- Then we can remove the corresponding event for the monster
             -- But in current code, monsters are represented as another type (Monster), which all share
             -- the same monsterEncounterEvent (which will not be rendered in the map).
             -- To remove a monster in map, we need to remove it from the monsters, not events.
-            remainMonsters = if isMonsterDefeated then filter (not . gameMonsterEqual monster) (monsters game) else monsters game
             -- also set inEvent to Nothing, otherwise, even if the monster is defeated, the UI (event bar) will not be updated
             -- TODO: fix the corner case, where multiple monsters are at the same position. In that case, we cannot set inEvent to Nothing
-            evt = if isMonsterDefeated then Nothing else inEvent game
-            updatedGame = applyBonus bonusGain game
-         in updatedGame {hp = newPlayerHp, monsters = remainMonsters, gameOver = gameOverUpdate, inEvent = evt}
+            evt = if isMonsterDefeated then Nothing else inEvent gameUpdatedMonster
+            updatedGame = if isMonsterDefeated then applyBonus bonusGain gameUpdatedMonster else gameUpdatedMonster
+         in updatedGame {hp = newPlayerHp, monsters = finalMonsters, gameOver = gameOverUpdate, inEvent = evt}
       Nothing -> game
 
 applyBonus :: Bonus -> Game -> Game
@@ -134,6 +137,19 @@ applyBonus bonus game = -- define how bonuses are applied
     AttackBonus bonusAmount -> game { attack = attack game + bonusAmount }
     ShieldBonus bonusAmount -> game { shield = min 100 (shield game + bonusAmount) }
     SwordBonus bonusAmount -> game { sword = sword game + bonusAmount }
+
+getBonusForMonster :: String -> Bonus
+getBonusForMonster monsterName = 
+  case monsterName of
+    "Goblin Raider" -> ShieldBonus 5
+    "Forest Nymph" -> SwordBonus 3
+    "Mountain Troll" -> HPBonus 10
+    "Shadow Assassin" -> AttackBonus 4
+    _ -> NoBonus
+
+
+replaceMonsterInList :: Monster -> Monster -> [Monster] -> [Monster]
+replaceMonsterInList oldMonster newMonster = map (\m -> if gameMonsterEqual m oldMonster then newMonster else m)
 
 useItem :: Game -> Game
 useItem game =
