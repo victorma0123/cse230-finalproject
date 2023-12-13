@@ -1,6 +1,7 @@
 module GameLogic where
 
 import Brick (str)
+import Debug (appendKeyValueLog, appendLogsToGame)
 import System.Random (randomRIO)
 import Types
 
@@ -15,22 +16,22 @@ import Types
 sleepEvent :: GameEvent
 sleepEvent =
   GEvent
-      { eventX = 5,
-        eventY = 5,
-        name = "sleep!",
-        description = "Sleeping will help recover HP",
-        choices =
-          [ GChoice
-              { title = "sleep for 10 hours",
-                effect = \g -> g {hp = hp g + 2}
-              },
-            GChoice
-              { title = "sleep for 5 hours",
-                effect = \g -> g {hp = hp g + 1}
-              }
-          ],
-        icon = str "s"
-      }
+    { eventX = 5,
+      eventY = 5,
+      name = "sleep!",
+      description = "Sleeping will help recover HP",
+      choices =
+        [ GChoice
+            { title = "sleep for 10 hours",
+              effect = \g -> g {hp = hp g + 2}
+            },
+          GChoice
+            { title = "sleep for 5 hours",
+              effect = \g -> g {hp = hp g + 1}
+            }
+        ],
+      icon = str "s"
+    }
 
 -- Monster Encounter
 goblinRaiderEvent :: GameEvent
@@ -77,7 +78,6 @@ shadowAssassinEvent =
       icon = str "S"
     }
 
-
 gameMonsterEqual :: Monster -> Monster -> Bool
 gameMonsterEqual m1 m2 =
   monsterPosX m1 == monsterPosX m2
@@ -107,11 +107,14 @@ fightMonster game =
     case inMonster game of
       Just monster ->
         let currentMonster = monster
+            logs :: [String]
+            logs = []
             newPlayerHp = max 0 (hp game - monsterAttack monster)
             newMonsterHp = max 0 (monsterHp monster - attack game)
+            logs' = appendKeyValueLog "new monster hp" (show newMonsterHp) logs
             updatedMonster = monster {monsterHp = newMonsterHp}
             updatedMonsters = replaceMonsterInList monster updatedMonster (monsters game)
-            gameUpdatedMonster = game {monsters = updatedMonsters} 
+            gameUpdatedMonster = game {monsters = updatedMonsters}
             isMonsterDefeated = newMonsterHp <= 0
             finalMonsters = if isMonsterDefeated then filter (not . gameMonsterEqual monster) updatedMonsters else monsters game
             gameOverUpdate = hp game == 0
@@ -126,27 +129,35 @@ fightMonster game =
             -- TODO: fix the corner case, where multiple monsters are at the same position. In that case, we cannot set inEvent to Nothing
             evt = if isMonsterDefeated then Nothing else inEvent gameUpdatedMonster
             updatedGame = if isMonsterDefeated then applyBonus bonusGain gameUpdatedMonster else gameUpdatedMonster
-         in updatedGame {hp = newPlayerHp, monsters = finalMonsters, gameOver = gameOverUpdate, inEvent = evt}
+         in appendLogsToGame logs' $
+              updatedGame
+                { hp = newPlayerHp,
+                  monsters = finalMonsters,
+                  gameOver = gameOverUpdate,
+                  inEvent = evt,
+                  -- need to update the inMonster. Otherwise, it still points to the old monster (whose hp is not decreased yet)
+                  inMonster = if isMonsterDefeated then Nothing else Just updatedMonster
+                }
       Nothing -> game
 
 applyBonus :: Bonus -> Game -> Game
-applyBonus bonus game = -- define how bonuses are applied
+applyBonus bonus game =
+  -- define how bonuses are applied
   case bonus of
     NoBonus -> game
-    HPBonus bonusAmount -> game { hp = min 100 (hp game + bonusAmount) }
-    AttackBonus bonusAmount -> game { attack = attack game + bonusAmount }
-    ShieldBonus bonusAmount -> game { shield = min 100 (shield game + bonusAmount) }
-    SwordBonus bonusAmount -> game { sword = sword game + bonusAmount }
+    HPBonus bonusAmount -> game {hp = min 100 (hp game + bonusAmount)}
+    AttackBonus bonusAmount -> game {attack = attack game + bonusAmount}
+    ShieldBonus bonusAmount -> game {shield = min 100 (shield game + bonusAmount)}
+    SwordBonus bonusAmount -> game {sword = sword game + bonusAmount}
 
 getBonusForMonster :: String -> Bonus
-getBonusForMonster monsterName = 
+getBonusForMonster monsterName =
   case monsterName of
     "Goblin Raider" -> ShieldBonus 5
     "Forest Nymph" -> SwordBonus 3
     "Mountain Troll" -> HPBonus 10
     "Shadow Assassin" -> AttackBonus 4
     _ -> NoBonus
-
 
 replaceMonsterInList :: Monster -> Monster -> [Monster] -> [Monster]
 replaceMonsterInList oldMonster newMonster = map (\m -> if gameMonsterEqual m oldMonster then newMonster else m)
@@ -174,7 +185,6 @@ moveMonster monster game = do
   if isMountain
     then return monster -- 如果新位置有山脉，怪物保持不动
     else return $ monster {monsterPosX = newX, monsterPosY = newY}
-
 
 -- Treasure Chest
 treasureChest :: GameEvent
@@ -207,5 +217,3 @@ openChest game =
     healthBonus = 20
     shieldBonus = 15
     trapDamage = 10
-
-

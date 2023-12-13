@@ -28,6 +28,7 @@ import Brick.Widgets.Center
 import Brick.Widgets.Core
 import Control.Monad.IO.Class (liftIO)
 import Data.List (find)
+import Debug
 import GameLogic
 import qualified Graphics.Vty as V
 import Init
@@ -222,19 +223,22 @@ drawUI g =
     then [drawGameOverScreen]
     else
       let mapRows = drawMap g
-       in [ joinBorders $
-              border $
-                hLimit (gWidth * gRow2Col) $
-                  vBox
-                    [ setAvailableSize (gWidth * gRow2Col, gMapHeight) $ center $ border mapRows, -- 将地图行添加到界面中
-                      hBorder,
-                      setAvailableSize (gWidth * gRow2Col, gBarHeight) $
-                        hBox
-                          [ hLimit (gWidth * gRow2Col `div` 2) $ vCenter $ padRight Max $ drawStatus g,
-                            vBorder,
-                            hLimit (gWidth * gRow2Col `div` 2) $ vCenter $ padRight Max $ drawEvent g
-                          ]
-                    ]
+          debugLogs = if displayLogs g then drawLogs (logs g) else emptyWidget
+       in [ joinBorders
+              ( border $
+                  hLimit (gWidth * gRow2Col) $
+                    vBox
+                      [ setAvailableSize (gWidth * gRow2Col, gMapHeight) $ center $ border mapRows, -- 将地图行添加到界面中
+                        hBorder,
+                        setAvailableSize (gWidth * gRow2Col, gBarHeight) $
+                          hBox
+                            [ hLimit (gWidth * gRow2Col `div` 2) $ vCenter $ padRight Max $ drawStatus g,
+                              vBorder,
+                              hLimit (gWidth * gRow2Col `div` 2) $ vCenter $ padRight Max $ drawEvent g
+                            ]
+                      ]
+              )
+              <+> debugLogs
           ]
 
 -- Game Over
@@ -266,8 +270,8 @@ createCell x y g =
   case renderMountain x y g of
     Just mountainWidget -> mountainWidget
     Nothing ->
-      case getMonsterAt x y g of
-        Just monster -> str (show (monsterHp monster))
+      case renderMonster x y g of
+        Just w -> w
         Nothing ->
           if (posX g == x) && (posY g == y)
             then str "☺️" -- 用 "☺️" 表示玩家
@@ -315,3 +319,7 @@ drawEvent g =
               <+> str ("Choice " ++ show (i + 1) ++ ": " ++ title (choices event !! i))
             | i <- [0 .. length (choices event) - 1]
           ]
+
+-- debug logs
+drawLogs :: [String] -> Widget Name
+drawLogs logs = vBox [str s | s <- logs]

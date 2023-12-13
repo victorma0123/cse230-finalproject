@@ -24,7 +24,10 @@ data Game = Game
     -- it after it is defeated
     inMonster :: Maybe Monster,
     gameOver :: Bool,
-    mountains :: [Mountain]
+    mountains :: [Mountain],
+    -- debug logs
+    displayLogs :: Bool,
+    logs :: [String]
   }
 
 data GameEvent = GEvent
