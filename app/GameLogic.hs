@@ -5,6 +5,7 @@ import Debug (appendKeyValueLog, appendLogsToGame)
 import System.Random (randomRIO)
 import Types
 
+
 -- current implementation only checks whether two monsters are at the
 -- same position. An corner case is that two (different) monster may
 -- randomly walk to the same position. And in that case, when calling
@@ -16,8 +17,8 @@ import Types
 sleepEvent :: GameEvent
 sleepEvent =
   GEvent
-    { eventX = 5,
-      eventY = 5,
+    { eventX = 10,
+      eventY = 10,
       name = "sleep!",
       description = "Sleeping will help recover HP",
       choices =
@@ -190,7 +191,7 @@ moveMonster monster game = do
 treasureChest :: GameEvent
 treasureChest =
   GEvent
-    { eventX = 15,
+    { eventX = 10,
       eventY = 15,
       name = "Treasure Chest",
       description = "You've found a treasure chest!",
@@ -217,3 +218,131 @@ openChest game =
     healthBonus = 20
     shieldBonus = 15
     trapDamage = 10
+
+-- Ancient Shrine
+ancientShrineEncounter :: GameEvent
+ancientShrineEncounter = GEvent
+  { eventX = 7,
+    eventY = 7,
+    name = "Ancient Shrine Encounter",
+    description = "You encounter a mysterious ancient shrine in the forest.",
+    choices = [offerStrengthChoice, meditateChoice],
+    icon = str "A"
+  }
+
+offerStrengthChoice :: EventChoice
+offerStrengthChoice = GChoice
+  { title = "Offer Strength",
+    effect = \game -> 
+      if attack game > 3 
+      then game { attack = attack game - 3, sword = sword game + 10 } 
+      else game
+  }
+
+meditateChoice :: EventChoice
+meditateChoice = GChoice
+  { title = "Meditate",
+    effect = \game -> game { shield = shield game + 5 }
+  }
+
+-- Mysterious Traveler
+mysteriousTraveler :: GameEvent
+mysteriousTraveler = GEvent
+  { eventX = 14,
+    eventY = 7,
+    name = "Mysterious Traveler",
+    description = "You meet a mysterious traveler at a crossroads.",
+    choices = [shareMealChoice, trainTogetherChoice],
+    icon = str "M"
+  }
+
+shareMealChoice :: EventChoice
+shareMealChoice = GChoice
+  { title = "Share a meal",
+    effect = \game -> game { hp = hp game - 10, shield = shield game + 10 }
+  }
+
+trainTogetherChoice :: EventChoice
+trainTogetherChoice = GChoice
+  { title = "Train together",
+    effect = \game -> game { attack = attack game + 3 }
+  }
+
+-- Lost Treasure Chest
+lostTreasureChest :: GameEvent
+lostTreasureChest = GEvent
+  { eventX = 16,
+    eventY = 4,
+    name = "Lost Treasure Chest",
+    description = "You find a lost treasure chest in a hidden cave.",
+    choices = [forceOpenChoice, carefullyUnlockChoice],
+    icon = str "T"
+  }
+
+forceOpenChoice :: EventChoice
+forceOpenChoice = GChoice
+  { title = "Force open",
+    effect = \game -> 
+      if attack game > 20 
+      then game { hp = hp game + 5, shield = shield game + 5 } 
+      else game
+  }
+
+carefullyUnlockChoice :: EventChoice
+carefullyUnlockChoice = GChoice
+  { title = "Carefully unlock",
+    effect = \game -> 
+      if sword game > 15 
+      then game { hp = hp game + 10 }  -- Assuming finding gold impacts hp positively
+      else game
+  }
+
+
+--  Enchanted Lake
+enchantedLake :: GameEvent
+enchantedLake = GEvent
+  { eventX = 3,
+    eventY = 13,
+    name = "Enchanted Lake",
+    description = "You discover an enchanted lake that glows under the moonlight.",
+    choices = [batheInLakeChoice, searchAroundChoice],
+    icon = str "L"
+  }
+
+batheInLakeChoice :: EventChoice
+batheInLakeChoice = GChoice
+  { title = "Bathe in the lake",
+    effect = \game -> game { hp = 150 }  -- Assuming full heal plus extra HP
+  }
+
+searchAroundChoice :: EventChoice
+searchAroundChoice = GChoice
+  { title = "Search around the lake",
+    effect = \game -> game -- Implementation depends on what the random bonuses are
+  }
+
+-- Ancient Library
+ancientLibrary :: GameEvent
+ancientLibrary = GEvent
+  { eventX = 2,
+    eventY = 9,
+    name = "The Ancient Library",
+    description = "You find yourself in a library filled with ancient tomes.",
+    choices = [studyAncientTomesChoice, searchForSecretsChoice],
+    icon = str "I"
+  }
+
+studyAncientTomesChoice :: EventChoice
+studyAncientTomesChoice = GChoice
+  { title = "Study ancient tomes",
+    effect = \game -> 
+      if sword game >= 10  -- Adjust the threshold for 'high Sword' as needed
+      then game { attack = attack game + 5 } 
+      else game
+  }
+
+searchForSecretsChoice :: EventChoice
+searchForSecretsChoice = GChoice
+  { title = "Search for secret passages",
+    effect = \game -> game -- Effect depends on how you want to handle map discovery
+  }
