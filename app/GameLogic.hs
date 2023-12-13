@@ -33,16 +33,50 @@ sleepEvent =
       }
 
 -- Monster Encounter
-monsterEncounterEvent :: GameEvent
-monsterEncounterEvent =
+goblinRaiderEvent :: GameEvent
+goblinRaiderEvent =
   GEvent
     { eventX = -1,
       eventY = -1,
-      name = "Monster Encounter",
-      description = "A wild creature appears!",
+      name = "Goblin Raider",
+      description = "A sneaky Goblin Raider jumps out!",
       choices = [fightChoice, useItemChoice, fleeChoice],
-      icon = str "M"
+      icon = str "G"
     }
+
+forestNymphEvent :: GameEvent
+forestNymphEvent =
+  GEvent
+    { eventX = -1,
+      eventY = -1,
+      name = "Forest Nymph",
+      description = "A mystical Forest Nymph appears!",
+      choices = [fightChoice, useItemChoice, fleeChoice],
+      icon = str "F"
+    }
+
+mountainTrollEvent :: GameEvent
+mountainTrollEvent =
+  GEvent
+    { eventX = -1,
+      eventY = -1,
+      name = "Mountain Troll",
+      description = "A formidable Mountain Troll blocks your path!",
+      choices = [fightChoice, useItemChoice, fleeChoice],
+      icon = str "T"
+    }
+
+shadowAssassinEvent :: GameEvent
+shadowAssassinEvent =
+  GEvent
+    { eventX = -1,
+      eventY = -1,
+      name = "Shadow Assassin",
+      description = "A deadly Shadow Assassin emerges from the shadows!",
+      choices = [fightChoice, useItemChoice, fleeChoice],
+      icon = str "S"
+    }
+
 
 gameMonsterEqual :: Monster -> Monster -> Bool
 gameMonsterEqual m1 m2 =
@@ -69,8 +103,12 @@ fightMonster game =
   updateGameState $
     case inMonster game of
       Just monster ->
-        let monsterHp = 30
-            monsterAttack = 20
+        let (monsterHp, monsterAttack, bonusGain) = case name monster of
+              "Goblin Raider" -> (30, 8, ShieldBonus 5)
+              "Forest Nymph" -> (20, 6, SwordBonus 3)
+              "Mountain Troll" -> (50, 12, HPBonus 10)
+              "Shadow Assassin" -> (35, 15, AttackBonus 4)
+              _ -> (0, 0, NoBonus) -- Default case
             newPlayerHp = max 0 (hp game - monsterAttack)
             isMonsterDefeated = attack game >= monsterHp
             gameOverUpdate = hp game == 0
@@ -84,8 +122,18 @@ fightMonster game =
             -- also set inEvent to Nothing, otherwise, even if the monster is defeated, the UI (event bar) will not be updated
             -- TODO: fix the corner case, where multiple monsters are at the same position. In that case, we cannot set inEvent to Nothing
             evt = if isMonsterDefeated then Nothing else inEvent game
-         in game {hp = newPlayerHp, monsters = remainMonsters, gameOver = gameOverUpdate, inEvent = evt}
+            updatedGame = applyBonus bonusGain game
+         in updatedGame {hp = newPlayerHp, monsters = remainMonsters, gameOver = gameOverUpdate, inEvent = evt}
       Nothing -> game
+
+applyBonus :: Bonus -> Game -> Game
+applyBonus bonus game = -- define how bonuses are applied
+  case bonus of
+    NoBonus -> game
+    HPBonus bonusAmount -> game { hp = min 100 (hp game + bonusAmount) }
+    AttackBonus bonusAmount -> game { attack = attack game + bonusAmount }
+    ShieldBonus bonusAmount -> game { shield = min 100 (shield game + bonusAmount) }
+    SwordBonus bonusAmount -> game { sword = sword game + bonusAmount }
 
 useItem :: Game -> Game
 useItem game =

@@ -29,10 +29,10 @@ initialState =
   Game
     { posX = 0,
       posY = 0,
-      sheild = 100,
-      sword = 100,
+      sheild = 10,
+      sword = 10,
       hp = 100,
-      attack = 100,
+      attack = 15,
       events = initialEvents,
       iChoice = -1,
       inEvent = Nothing,
