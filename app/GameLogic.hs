@@ -197,12 +197,13 @@ openChestChoice =
 
 openChest :: Game -> Game
 openChest game =
-  if even (posX game + posY game) -- Using player's position to determine the outcome
-    then game {hp = min 150 (hp game + healthBonus)} -- Even position sums give health
-    else
-      if posX game `mod` 3 == 0
-        then game {shield = min 100 (shield game + shieldBonus)} -- Position x divisible by 3 gives shield
-        else game {hp = max 0 (hp game - trapDamage)} -- Other positions are traps
+  let gameWithTreasureOpened = game { treasureOpened = True }
+   in if even (posX game + posY game)
+        then gameWithTreasureOpened {hp = min 150 (hp game + healthBonus)} 
+        else
+          if posX game `mod` 3 == 0
+            then gameWithTreasureOpened {shield = min 100 (shield game + shieldBonus)}
+            else gameWithTreasureOpened {hp = max 0 (hp game - trapDamage)}
   where
     healthBonus = 20
     shieldBonus = 15

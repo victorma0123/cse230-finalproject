@@ -72,10 +72,13 @@ theMap =
 -- Handling events
 
 handleEvent :: Game -> BrickEvent Name Tick -> EventM Name (Next Game)
-handleEvent g (VtyEvent (V.EvKey V.KEnter [])) = continue $
-  case inEvent g of
+handleEvent g (VtyEvent (V.EvKey V.KEnter [])) =
+  continue $ case inEvent g of
+    Just e -> 
+      if name e == "Treasure Chest" && treasureOpened g
+        then g -- 如果是已打开的宝箱，不进行任何操作
+        else effect (choices e !! iChoice g) g
     Nothing -> g
-    Just e -> effect (choices e !! iChoice g) g
 -- Handle for moving
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'w') [])) =
   continue $ movePlayer (0, -1) g
@@ -102,9 +105,19 @@ handleEvent g (VtyEvent (V.EvKey (V.KChar char) [])) = continue $
     Just event ->
       let choiceIndex = charToChoiceIndex char
        in if choiceIndex >= 0 && choiceIndex < length (choices event)
-            then effect (choices event !! choiceIndex) g
+            then 
+              if name event == "Treasure Chest" && treasureOpened g
+                then g -- 如果是已打开的宝箱，不进行任何操作
+                else effect (choices event !! choiceIndex) g
             else g
     Nothing -> g
+-- 其他事件处理保持不变
+
+
+
+
+
+    
 -- Locking monster when meeting with player
 handleEvent g (AppEvent Tick) = do
   -- Move monsters only if they are not in an event with the player
@@ -226,7 +239,7 @@ drawUI g =
               border $
                 hLimit (gWidth * gRow2Col) $
                   vBox
-                    [ setAvailableSize (gWidth * gRow2Col, gMapHeight) $ center $ border mapRows, -- 将地图行添加到界面中
+                    [ setAvailableSize (gWidth * gRow2Col, gMsapHeight) $ center $ border mapRows, -- 将地图行添加到界面中
                       hBorder,
                       setAvailableSize (gWidth * gRow2Col, gBarHeight) $
                         hBox
@@ -273,7 +286,10 @@ createCell x y g =
             then str "☺️" -- 用 "☺️" 表示玩家
             else case getEvent x y g of
               Nothing -> str " " -- 空白表示空单元格
-              Just e -> icon e -- 用事件的图标表示事件
+              Just e -> 
+                if name e == "Treasure Chest" && treasureOpened g
+                  then str " " -- 如果宝箱已经被打开，则不显示
+                  else icon e -- 用事件的图标表示事件
 
 -- Status Bar
 drawStatus :: Game -> Widget n

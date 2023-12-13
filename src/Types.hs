@@ -24,7 +24,8 @@ data Game = Game
     -- it after it is defeated
     inMonster :: Maybe Monster,
     gameOver :: Bool,
-    mountains :: [Mountain]
+    mountains :: [Mountain],
+    treasureOpened :: Bool
   }
 
 data GameEvent = GEvent
