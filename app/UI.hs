@@ -26,7 +26,7 @@ import Brick.Widgets.Center
 import Brick.Widgets.Core
 import Control.Monad.IO.Class (liftIO)
 import Data.List (find)
-import GameLogic (monsterEncounterEvent, moveMonster)
+import GameLogic 
 import qualified Graphics.Vty as V
 import Init
 import Types
@@ -132,7 +132,7 @@ movePlayerHelper (dx, dy) game =
       maybeMonster = getMonsterAt newX newY game
       maybeEvent = getEvent newX newY game
       newInEvent = case maybeMonster of
-        Just _ -> Just monsterEncounterEvent
+        Just _ -> Just goblinRaiderEvent
         Nothing -> maybeEvent
    in -- we can always safely set choice index to 0 when we move to a new cell
       game {posX = newX, posY = newY, inEvent = newInEvent, iChoice = 0, inMonster = maybeMonster}
@@ -149,11 +149,30 @@ movePlayer (dx, dy) game =
 charToChoiceIndex :: Char -> Int
 charToChoiceIndex char = fromEnum char - fromEnum '1'
 
+{-
 checkForEncounters :: Game -> Game
 checkForEncounters game =
   if any (\m -> monsterPosX m == posX game && monsterPosY m == posY game) (monsters game)
-    then game {inEvent = Just monsterEncounterEvent} -- Trigger monster encounter
+    then game {inEvent = Just goblinRaiderEvent} -- Trigger monster encounter
     else game -- No changes if no encounters
+-}
+
+checkForEncounters :: Game -> Game
+checkForEncounters game =
+  case find (\m -> monsterPosX m == posX game && monsterPosY m == posY game) (monsters game) of
+    Just monster -> game {inEvent = Just (getMonsterEvent (monsterName monster))}
+    Nothing -> game -- No changes if no encounters
+
+
+getMonsterEvent :: String -> GameEvent
+getMonsterEvent monsterName = 
+  case monsterName of
+    "Goblin Raider" -> goblinRaiderEvent
+    "Forest Nymph" -> forestNymphEvent
+    "Mountain Troll" -> mountainTrollEvent
+    "Shadow Assassin" -> shadowAssassinEvent
+
+
 
 isEngagedInEvent :: Monster -> Game -> Bool
 isEngagedInEvent monster game =
@@ -245,7 +264,7 @@ createCell x y g =
 drawStatus :: Game -> Widget n
 drawStatus g =
   str ("Press 'q' to quit the game.\n\n")
-    <=> str ("Shield: " ++ show (sheild g))
+    <=> str ("Shield: " ++ show (shield g))
     <=> str ("Sword: " ++ show (sword g))
     <=> str ("HP: " ++ show (hp g))
     <=> str ("Attack: " ++ show (attack g))

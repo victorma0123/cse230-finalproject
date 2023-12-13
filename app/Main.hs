@@ -14,7 +14,7 @@ import UI
 import System.Random (randomRIO)
 import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad (forever)
-import GameLogic (moveMonster, monsterEncounterEvent, treasureChest)
+import GameLogic 
 import Init
 import Control.Monad
 

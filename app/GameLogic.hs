@@ -103,14 +103,14 @@ fightMonster game =
   updateGameState $
     case inMonster game of
       Just monster ->
-        let (monsterHp, monsterAttack, bonusGain) = case name monster of
+        let (monsterHp, monsterAttack, bonusGain) = case monsterName monster of
               "Goblin Raider" -> (30, 8, ShieldBonus 5)
               "Forest Nymph" -> (20, 6, SwordBonus 3)
               "Mountain Troll" -> (50, 12, HPBonus 10)
               "Shadow Assassin" -> (35, 15, AttackBonus 4)
               _ -> (0, 0, NoBonus) -- Default case
             newPlayerHp = max 0 (hp game - monsterAttack)
-            isMonsterDefeated = attack game >= monsterHp
+            isMonsterDefeated = attack game >= 0
             gameOverUpdate = hp game == 0
             -- remove the defeated monster (not the monster event!)
             -- Ideally, we can add a type in event to indicate this is an monster (that can move!).
@@ -185,7 +185,7 @@ openChest game =
     then game {hp = min 150 (hp game + healthBonus)} -- Even position sums give health
     else
       if posX game `mod` 3 == 0
-        then game {sheild = min 100 (sheild game + shieldBonus)} -- Position x divisible by 3 gives shield
+        then game {shield = min 100 (shield game + shieldBonus)} -- Position x divisible by 3 gives shield
         else game {hp = max 0 (hp game - trapDamage)} -- Other positions are traps
   where
     healthBonus = 20

@@ -29,22 +29,25 @@ initialState =
   Game
     { posX = 0,
       posY = 0,
-      sheild = 10,
+      shield = 10,
       sword = 10,
       hp = 100,
       attack = 15,
       events = initialEvents,
       iChoice = -1,
       inEvent = Nothing,
-      monsters = [Monster 10 10, Monster 20 10],
+      monsters = [Monster 10 10 "Goblin Raider", Monster 5 5 "Forest Nymph"],
       inMonster = Nothing,
       gameOver = False,
-      mountains = [Mountain 1 2, Mountain 1 3, Mountain 1 4, Mountain 1 5, Mountain 2 5, Mountain 10 11, Mountain 11 10]
+      mountains = [Mountain 1 2, Mountain 1 3, Mountain 1 4, Mountain 1 5, Mountain 2 5]
     }
 
 initialEvents :: [GameEvent]
 initialEvents =
   [ sleepEvent,
-    monsterEncounterEvent,
+    goblinRaiderEvent,
+    forestNymphEvent,
+    mountainTrollEvent,
+    shadowAssassinEvent,
     treasureChest
   ]

@@ -11,7 +11,7 @@ import Brick (Widget)
 data Game = Game
   { posX :: Int,
     posY :: Int,
-    sheild :: Int,
+    shield :: Int,
     sword :: Int,
     hp :: Int,
     attack :: Int,
@@ -43,7 +43,8 @@ data EventChoice = GChoice
 
 data Monster = Monster
   { monsterPosX :: Int,
-    monsterPosY :: Int
+    monsterPosY :: Int,
+    monsterName :: String
     -- other attributes
   }
   deriving (Eq, Show)
@@ -66,3 +67,5 @@ data Tick = Tick
 -- Not currently used, but will be easier to refactor
 -- if we call this "Name" now.
 type Name = ()
+
+data Bonus = NoBonus | HPBonus Int | AttackBonus Int | ShieldBonus Int | SwordBonus Int
