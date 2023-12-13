@@ -108,11 +108,8 @@ fightMonster game =
     case inMonster game of
       Just monster ->
         let currentMonster = monster
-            logs :: [String]
-            logs = []
             newPlayerHp = max 0 (hp game - monsterAttack monster)
             newMonsterHp = max 0 (monsterHp monster - attack game)
-            logs' = appendKeyValueLog "new monster hp" (show newMonsterHp) logs
             updatedMonster = monster {monsterHp = newMonsterHp}
             updatedMonsters = replaceMonsterInList monster updatedMonster (monsters game)
             gameUpdatedMonster = game {monsters = updatedMonsters}
@@ -120,26 +117,18 @@ fightMonster game =
             finalMonsters = if isMonsterDefeated then filter (not . gameMonsterEqual monster) updatedMonsters else monsters game
             gameOverUpdate = hp game == 0
             bonusGain = getBonusForMonster (monsterName monster)
-            -- remove the defeated monster (not the monster event!)
-            -- Ideally, we can add a type in event to indicate this is an monster (that can move!).
-            -- Then we can remove the corresponding event for the monster
-            -- But in current code, monsters are represented as another type (Monster), which all share
-            -- the same monsterEncounterEvent (which will not be rendered in the map).
-            -- To remove a monster in map, we need to remove it from the monsters, not events.
-            -- also set inEvent to Nothing, otherwise, even if the monster is defeated, the UI (event bar) will not be updated
-            -- TODO: fix the corner case, where multiple monsters are at the same position. In that case, we cannot set inEvent to Nothing
             evt = if isMonsterDefeated then Nothing else inEvent gameUpdatedMonster
             updatedGame = if isMonsterDefeated then applyBonus bonusGain gameUpdatedMonster else gameUpdatedMonster
-         in appendLogsToGame logs' $
-              updatedGame
-                { hp = newPlayerHp,
-                  monsters = finalMonsters,
-                  gameOver = gameOverUpdate,
-                  inEvent = evt,
-                  -- need to update the inMonster. Otherwise, it still points to the old monster (whose hp is not decreased yet)
-                  inMonster = if isMonsterDefeated then Nothing else Just updatedMonster
-                }
+         in updatedGame
+              { hp = newPlayerHp,
+                monsters = finalMonsters,
+                gameOver = gameOverUpdate,
+                inEvent = evt,
+                inMonster = if isMonsterDefeated then Nothing else Just updatedMonster,
+                inBattle = not isMonsterDefeated -- 设置 inBattle 根据怪物是否被击败
+              }
       Nothing -> game
+
 
 applyBonus :: Bonus -> Game -> Game
 applyBonus bonus game =

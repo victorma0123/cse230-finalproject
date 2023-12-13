@@ -79,13 +79,13 @@ handleEvent g (VtyEvent (V.EvKey V.KEnter [])) = continue $
     Just e -> effect (choices e !! iChoice g) g
 -- Handle for moving
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'w') [])) =
-  continue $ movePlayer (0, -1) g
+  continue $ moveAndUpdateBattleState (0, -1) g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'a') [])) =
-  continue $ movePlayer (-1, 0) g
+  continue $ moveAndUpdateBattleState (-1, 0) g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 's') [])) =
-  continue $ movePlayer (0, 1) g
+  continue $ moveAndUpdateBattleState (0, 1) g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'd') [])) =
-  continue $ movePlayer (1, 0) g
+  continue $ moveAndUpdateBattleState (1, 0) g
 -- Handle for quit game
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'q') [])) = halt g
 -- Handle make choice in event
@@ -109,18 +109,25 @@ handleEvent g (VtyEvent (V.EvKey (V.KChar char) [])) = continue $
 -- Locking monster when meeting with player
 handleEvent g (AppEvent Tick) = do
   -- Move monsters only if they are not in an event with the player
-  newMonsters <-
-    liftIO $
-      mapM
-        ( \m ->
-            if isEngagedInEvent m g
-              then return m
-              else moveMonster m g
-        )
-        (monsters g)
+  newMonsters <- liftIO $ mapM (\m -> if isEngagedInEvent m g 
+                                      then return m 
+                                      else moveMonster m g) (monsters g)
   let updatedGame = checkForEncounters g {monsters = newMonsters}
   continue updatedGame
 handleEvent g _ = continue g
+
+-- Helper function to move player and update battle state
+moveAndUpdateBattleState :: (Int, Int) -> Game -> Game
+moveAndUpdateBattleState move g =
+  let updatedGame = movePlayer move g
+      playerPos = (posX updatedGame, posY updatedGame)
+      monsterPos = map (\m -> (monsterPosX m, monsterPosY m)) (monsters updatedGame)
+  in if any (== playerPos) monsterPos
+     then updatedGame { inBattle = True } -- Enter battle state
+     else updatedGame
+
+
+
 
 -- Functions Used in handleEvent
 
@@ -218,28 +225,26 @@ getMonsterAt x y game = find (\m -> monsterPosX m == x && monsterPosY m == y) (m
 
 -- Generate the interface
 drawUI :: Game -> [Widget Name]
-drawUI g =
-  if gameOver g
-    then [drawGameOverScreen]
-    else
-      let mapRows = drawMap g
-          debugLogs = if displayLogs g then drawLogs (logs g) else emptyWidget
-       in [ joinBorders
-              ( border $
-                  hLimit (gWidth * gRow2Col) $
-                    vBox
-                      [ setAvailableSize (gWidth * gRow2Col, gMapHeight) $ center $ border mapRows, -- 将地图行添加到界面中
-                        hBorder,
-                        setAvailableSize (gWidth * gRow2Col, gBarHeight) $
-                          hBox
-                            [ hLimit (gWidth * gRow2Col `div` 2) $ vCenter $ padRight Max $ drawStatus g,
-                              vBorder,
-                              hLimit (gWidth * gRow2Col `div` 2) $ vCenter $ padRight Max $ drawEvent g
-                            ]
-                      ]
-              )
-              <+> debugLogs
-          ]
+drawUI g
+  | gameOver g = [drawGameOverScreen]
+  | inBattle g = drawBattleScreen g -- 如果在战斗中，显示战斗界面
+  | otherwise =
+    let mapRows = drawMap g
+     in [ joinBorders $
+            border $
+              hLimit (gWidth * gRow2Col) $
+                vBox
+                  [ setAvailableSize (gWidth * gRow2Col, gMapHeight) $ center $ border mapRows,
+                    hBorder,
+                    setAvailableSize (gWidth * gRow2Col, gBarHeight) $
+                      hBox
+                        [ hLimit (gWidth * gRow2Col `div` 2) $ vCenter $ padRight Max $ drawStatus g,
+                          vBorder,
+                          hLimit (gWidth * gRow2Col `div` 2) $ vCenter $ padRight Max $ drawEvent g
+                        ]
+                  ]
+        ]
+
 
 -- Game Over
 drawGameOverScreen :: Widget Name
@@ -323,3 +328,59 @@ drawEvent g =
 -- debug logs
 drawLogs :: [String] -> Widget Name
 drawLogs logs = vBox [str s | s <- logs]
+
+drawBattleScreen :: Game -> [Widget Name]
+drawBattleScreen game =
+    [ vBox [ hBox [playerWidget, padLeft (Pad 2) monsterWidget]
+           , hBorder
+           , statusAndEventInfoWidget
+           ]
+    ]
+  where
+    playerText = unlines
+        [ "      _,."                      
+        , "    ,` -.)"                     
+        , "   ( _/-\\-._"                  
+        , "  /,|`--._,-^|            ,"    
+        , "  \\_| |`-._/||          ,'"    
+        , "    |  `-, / |         /  /"    
+        , "    |     || |        /  /"     
+        , "     `r-._||/   __   /  /"      
+        , " __,-<_     )`-/  `./  /"       
+        , "'  \\   `---'   \\   /  /"        
+        , "    |           |./  /"         
+        , "    /           //  /"          
+        , "\\_/' \\         |/  /"          
+        , " |    |   _,^-'/  /"            
+        , " |    , ``  (\\/  /_"            
+        , "  \\,.->._    \\X-=/^"             
+        , "  (  /   `-._//^`"               
+        , "   `Y-.____(__}"                 
+        , "    |     {__}"                
+        , "          ()"              
+        ]
+    playerWidget = strWrap playerText
+
+    monsterText = unlines
+        [ "·············▄▐·····"
+        , "·······▄▄▄··▄██▄····"
+        , "······▐▀█▀▌····▀█▄··"
+        , "······▐█▄█▌······▀█▄"
+        , "·······▀▄▀···▄▄▄▄▄▀▀"
+        , "·····▄▄▄██▀▀▀▀······"
+        , "····█▀▄▄▄█·▀▀·······"
+        , "····▌·▄▄▄▐▌▀▀▀······"
+        , "·▄·▐···▄▄·█·▀▀······"
+        , "·▀█▌···▄·▀█▀·▀······"
+        , "········▄▄▐▌▄▄······"
+        , "········▀███▀█·▄····"
+        , "·······▐▌▀▄▀▄▀▐▄····"
+        , "·······▐▀······▐▌···"
+        , "·······█········█···"
+        , "······▐▌·········█··"
+        ]
+    monsterWidget = strWrap monsterText
+
+    statusAndEventInfoWidget = hBox [drawStatus game, padLeft (Pad 2) (drawEvent game)]
+
+

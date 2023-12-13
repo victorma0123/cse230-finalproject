@@ -42,6 +42,7 @@ initialState =
       mountains = [Mountain 1 2, Mountain 1 3, Mountain 1 4, Mountain 1 5, Mountain 2 5],
       -- set it to True to display debug messages
       displayLogs = False,
+      inBattle = False,
       logs = []
     }
 

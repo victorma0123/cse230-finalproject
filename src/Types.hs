@@ -27,6 +27,7 @@ data Game = Game
     mountains :: [Mountain],
     -- debug logs
     displayLogs :: Bool,
+    inBattle :: Bool,
     logs :: [String]
   }
 
