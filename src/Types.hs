@@ -25,7 +25,9 @@ data Game = Game
     inMonster :: Maybe Monster,
     gameOver :: Bool,
     mountains :: [Mountain],
-    treasureOpened :: Bool
+    -- debug logs
+    displayLogs :: Bool,
+    logs :: [String]
   }
 
 data GameEvent = GEvent

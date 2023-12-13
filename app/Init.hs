@@ -39,7 +39,6 @@ initialState =
       monsters = [Monster 10 10 "Goblin Raider" 30 8, Monster 5 5 "Forest Nymph" 20 6, Monster 10 17 "Mountain Troll" 50 10, Monster 15 15 "Shadow Assassin" 40 12],
       inMonster = Nothing,
       gameOver = False,
-      treasureOpened = False,
       mountains = [Mountain 1 2, Mountain 1 3, Mountain 1 4, Mountain 1 5, Mountain 2 5]
     }
 
