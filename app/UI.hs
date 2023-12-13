@@ -76,7 +76,7 @@ handleEvent :: Game -> BrickEvent Name Tick -> EventM Name (Next Game)
 handleEvent g (VtyEvent (V.EvKey V.KEnter [])) = continue $
   case inEvent g of
     Nothing -> g
-    Just e -> effect (choices e !! iChoice g) g
+    Just e -> updateGameState $ effect (choices e !! iChoice g) g
 -- Handle for moving
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'w') [])) =
   continue $ movePlayer (0, -1) g
