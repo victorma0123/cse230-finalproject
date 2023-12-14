@@ -69,7 +69,12 @@ handleEvent g (VtyEvent (V.EvKey V.KEnter [])) = continue $
     Nothing -> g
     Just e ->
       let newGame = updateGameState $ effect (choices e !! iChoice g) g
-       in newGame {eventsMap = markEventAsUsed e g}
+       in newGame
+            { eventsMap = markEventAsUsed e g,
+              inEvent = case inMonster newGame of
+                Nothing -> Nothing
+                Just _ -> inEvent newGame
+            }
 -- Handle for moving
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'w') [])) =
   genMapRegionIfNotExist $ moveAndUpdateBattleState (0, -1) g
