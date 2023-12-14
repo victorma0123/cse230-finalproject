@@ -26,9 +26,14 @@ data Game = Game
     inMonster :: Maybe Monster,
     gameOver :: Bool,
     mountainsMap :: Map (Int, Int) [Mountain],
+    winner :: Bool,
+    loser :: Bool,
     -- debug logs
     displayLogs :: Bool,
-    logs :: [String]
+    inBattle :: Bool,
+    logs :: [String],
+    finalMonsterHp :: Int,
+    finalMonsterAttack :: Int
   }
 
 data GameEvent = GEvent
@@ -37,7 +42,8 @@ data GameEvent = GEvent
     name :: String,
     description :: String,
     choices :: [EventChoice],
-    icon :: Widget Name
+    icon :: Widget Name,
+    isused :: Bool
   }
 
 data EventChoice = GChoice

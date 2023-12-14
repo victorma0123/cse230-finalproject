@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 module GameLogic where
 
 import Brick (str)
@@ -32,7 +35,8 @@ sleepEvent =
               effect = \g -> g {hp = hp g + 1}
             }
         ],
-      icon = str "s"
+      icon = str "⏾",
+      isused = False
     }
 
 -- Monster Encounter
@@ -44,7 +48,8 @@ goblinRaiderEvent =
       name = "Goblin Raider",
       description = "A sneaky Goblin Raider jumps out!",
       choices = [fightChoice, useItemChoice, fleeChoice],
-      icon = str "G"
+      icon = str "G",
+      isused = False
     }
 
 forestNymphEvent :: GameEvent
@@ -55,7 +60,8 @@ forestNymphEvent =
       name = "Forest Nymph",
       description = "A mystical Forest Nymph appears!",
       choices = [fightChoice, useItemChoice, fleeChoice],
-      icon = str "F"
+      icon = str "F",
+      isused = False
     }
 
 mountainTrollEvent :: GameEvent
@@ -66,7 +72,8 @@ mountainTrollEvent =
       name = "Mountain Troll",
       description = "A formidable Mountain Troll blocks your path!",
       choices = [fightChoice, useItemChoice, fleeChoice],
-      icon = str "T"
+      icon = str "T",
+      isused = False
     }
 
 shadowAssassinEvent :: GameEvent
@@ -77,7 +84,8 @@ shadowAssassinEvent =
       name = "Shadow Assassin",
       description = "A deadly Shadow Assassin emerges from the shadows!",
       choices = [fightChoice, useItemChoice, fleeChoice],
-      icon = str "S"
+      icon = str "S",
+      isused = False
     }
 
 gameMonsterEqual :: Monster -> Monster -> Bool
@@ -106,11 +114,8 @@ fightMonster game =
     case inMonster game of
       Just monster ->
         let currentMonster = monster
-            logs :: [String]
-            logs = []
             newPlayerHp = max 0 (hp game - monsterAttack monster)
             newMonsterHp = max 0 (monsterHp monster - attack game)
-            logs' = appendKeyValueLog "new monster hp" (show newMonsterHp) logs
             updatedMonster = monster {monsterHp = newMonsterHp}
             updatedMonsters =
               replaceMonsterInList
@@ -136,15 +141,15 @@ fightMonster game =
             -- TODO: fix the corner case, where multiple monsters are at the same position. In that case, we cannot set inEvent to Nothing
             evt = if isMonsterDefeated then Nothing else inEvent game
             updatedGame = if isMonsterDefeated then applyBonus bonusGain game else game
-         in appendLogsToGame logs' $
-              updatedGame
-                { hp = newPlayerHp,
-                  monstersMap = insert (getMapRegionCoord (posX game, posY game)) finalMonsters (monstersMap game),
-                  gameOver = gameOverUpdate,
-                  inEvent = evt,
-                  -- need to update the inMonster. Otherwise, it still points to the old monster (whose hp is not decreased yet)
-                  inMonster = if isMonsterDefeated then Nothing else Just updatedMonster
-                }
+         in updatedGame
+              { hp = newPlayerHp,
+                monstersMap = insert (getMapRegionCoord (posX game, posY game)) finalMonsters (monstersMap game),
+                gameOver = gameOverUpdate,
+                inEvent = evt,
+                -- need to update the inMonster. Otherwise, it still points to the old monster (whose hp is not decreased yet)
+                inMonster = if isMonsterDefeated then Nothing else Just updatedMonster,
+                inBattle = not isMonsterDefeated -- 设置 inBattle 根据怪物是否被击败
+              }
       Nothing -> game
 
 applyBonus :: Bonus -> Game -> Game
@@ -176,7 +181,7 @@ useItem game =
    in game {hp = newHp}
 
 flee :: Game -> Game
-flee game = game {hp = max 0 (hp game - 5), inEvent = Nothing}
+flee game = game {hp = max 0 (hp game - 5), inEvent = Nothing, inBattle = False}
 
 moveMonster :: Monster -> Game -> IO Monster
 moveMonster monster game = do
@@ -203,7 +208,8 @@ treasureChest =
       name = "Treasure Chest",
       description = "You've found a treasure chest!",
       choices = [openChestChoice],
-      icon = str "✩"
+      icon = str "⛝",
+      isused = False
     }
 
 openChestChoice :: EventChoice
@@ -235,7 +241,8 @@ ancientShrineEncounter =
       name = "Ancient Shrine Encounter",
       description = "You encounter a mysterious ancient shrine in the forest.",
       choices = [offerStrengthChoice, meditateChoice],
-      icon = str "A"
+      icon = str "۩",
+      isused = False
     }
 
 offerStrengthChoice :: EventChoice
@@ -264,7 +271,8 @@ mysteriousTraveler =
       name = "Mysterious Traveler",
       description = "You meet a mysterious traveler at a crossroads.",
       choices = [shareMealChoice, trainTogetherChoice],
-      icon = str "M"
+      icon = str "⚇",
+      isused = False
     }
 
 shareMealChoice :: EventChoice
@@ -290,7 +298,8 @@ lostTreasureChest =
       name = "Lost Treasure Chest",
       description = "You find a lost treasure chest in a hidden cave.",
       choices = [forceOpenChoice, carefullyUnlockChoice],
-      icon = str "T"
+      icon = str "⛝",
+      isused = False
     }
 
 forceOpenChoice :: EventChoice
@@ -322,7 +331,8 @@ enchantedLake =
       name = "Enchanted Lake",
       description = "You discover an enchanted lake that glows under the moonlight.",
       choices = [batheInLakeChoice, searchAroundChoice],
-      icon = str "L"
+      icon = str "〰",
+      isused = False
     }
 
 batheInLakeChoice :: EventChoice
@@ -348,7 +358,8 @@ ancientLibrary =
       name = "The Ancient Library",
       description = "You find yourself in a library filled with ancient tomes.",
       choices = [studyAncientTomesChoice, searchForSecretsChoice],
-      icon = str "I"
+      icon = str "𐂨",
+      isused = False
     }
 
 studyAncientTomesChoice :: EventChoice
@@ -366,4 +377,66 @@ searchForSecretsChoice =
   GChoice
     { title = "Search for secret passages",
       effect = \game -> game -- Effect depends on how you want to handle map discovery
+    }
+
+-- -- Final Confrontation: The Dark Overlord's Lair Event
+-- finalConfrontation :: GameEvent
+-- finalConfrontation = GEvent
+--   { eventX = 18,
+--     eventY = 13,
+--     name = "Final Confrontation: The Dark Overlord's Lair",
+--     description = "You stand before the lair of the Dark Overlord, ready for the final battle.",
+--     choices = [directAssaultChoice],
+--     icon = str "D"
+--     ,isused = False
+--   }
+
+-- directAssaultChoice :: EventChoice
+-- directAssaultChoice = GChoice
+--   { title = "Direct assault",
+--     effect = \game ->
+--       if hp game >= 150 && shield game >= 20 && attack game >= 20 && sword game >= 15
+--       then game {winner = True}
+--       else game {loser = True}
+--   }
+
+-- Final Confrontation: The Dark Overlord's Lair Event
+finalConfrontation :: GameEvent
+finalConfrontation =
+  GEvent
+    { eventX = 18,
+      eventY = 13,
+      name = "Final Confrontation: The Dark Overlord's Lair",
+      description = "You stand before the lair of the Dark Overlord, ready for the final battle.",
+      choices = [directAssaultChoice, sneakAttackChoice], -- Added sneak attack choice
+      icon = str "D",
+      isused = False
+    }
+
+-- Direct Assault Choice
+directAssaultChoice :: EventChoice
+directAssaultChoice =
+  GChoice
+    { title = "Direct assault",
+      effect = \game ->
+        let playerAttack = attack game + (sword game `div` 2) -- 50% bonus from sword
+            newMonsterHp = finalMonsterHp game - playerAttack
+            newPlayerHp = hp game - finalMonsterAttack game
+         in if newMonsterHp <= 0
+              then game {winner = True}
+              else game {finalMonsterHp = newMonsterHp, hp = newPlayerHp, loser = newPlayerHp <= 0}
+    }
+
+-- Sneak Attack Choice
+sneakAttackChoice :: EventChoice
+sneakAttackChoice =
+  GChoice
+    { title = "Sneak attack",
+      effect = \game ->
+        let playerAttack = attack game + (shield game `div` 2) -- 50% bonus from shield
+            newMonsterHp = finalMonsterHp game - playerAttack
+            newPlayerHp = hp game - finalMonsterAttack game
+         in if newMonsterHp <= 0
+              then game {winner = True}
+              else game {finalMonsterHp = newMonsterHp, hp = newPlayerHp, loser = newPlayerHp <= 0}
     }

@@ -14,7 +14,8 @@ abandonedCampsite =
       name = "Abandoned Campsite",
       description = "You come across an abandoned campsite.",
       choices = [searchForSuppliesChoice, leaveUndisturbedChoice],
-      icon = str "🏘"
+      icon = str "🏘",
+      isused = False
     }
 
 searchForSuppliesChoice :: EventChoice
@@ -39,7 +40,8 @@ hermitsHut =
       name = "Hermit's Hut",
       description = "A wise hermit lives in a secluded hut.",
       choices = [seekAdviceChoice, leaveHermitChoice],
-      icon = str "⌂"
+      icon = str "⌂",
+      isused = False
     }
 
 seekAdviceChoice :: EventChoice
@@ -64,7 +66,8 @@ potionVendorCart =
       name = "Potion Vendor's Cart",
       description = "A colorful cart belonging to a potion vendor appears on the road.",
       choices = [buyPotionChoice, haggleChoice],
-      icon = str "𐋃"
+      icon = str "𐋃",
+      isused = False
       -- icon = str "🛒"
     }
 
@@ -93,7 +96,8 @@ bardsPerformance =
       name = "Bard's Performance",
       description = "A talented bard is performing in a bustling town square.",
       choices = [enjoyPerformanceChoice, tipBardChoice],
-      icon = str "🎜"
+      icon = str "🎜",
+      isused = False
       -- icon = str "🎵"
     }
 
@@ -120,7 +124,8 @@ fortuneTellersTent =
       description = "A mysterious fortune teller invites you into her tent.",
       choices = [fortuneToldChoice, declineChoice],
       -- icon = str "🔮"
-      icon = str "൜"
+      icon = str "൜",
+      isused = False
     }
 
 fortuneToldChoice :: EventChoice
@@ -145,7 +150,8 @@ smithyEncounter =
       name = "Smithy Encounter",
       description = "A skilled blacksmith offers to enhance your weapons and armor.",
       choices = [enhanceWeaponChoice, reinforceArmorChoice],
-      icon = str "☭"
+      icon = str "☭",
+      isused = False
       -- icon = str "🔨"
     }
 
@@ -171,7 +177,8 @@ elderlyExplorerAdvice =
       name = "Elderly Explorer's Advice",
       description = "An elderly explorer shares tales of ancient artifacts and hidden treasures.",
       choices = [listenAndLearnChoice, dismissAndContinueChoice],
-      icon = str "🗺️"
+      icon = str "🗺️",
+      isused = False
     }
 
 listenAndLearnChoice :: EventChoice
@@ -196,7 +203,8 @@ cursedRelicEncounter =
       name = "Cursed Relic Encounter",
       description = "You stumble upon an ancient relic emitting an ominous aura.",
       choices = [takeRelicChoice, leaveRelicChoice],
-      icon = str "🜘"
+      icon = str "🜘",
+      isused = False
       -- icon = str "🔱"
     }
 
@@ -222,7 +230,8 @@ mysteriousFountain =
       name = "Mysterious Fountain",
       description = "A fountain shrouded in mystery stands in the center of a clearing.",
       choices = [drinkFromFountainChoice, walkAwayChoice],
-      icon = str "🜄"
+      icon = str "🜄",
+      isused = False
       -- icon = str "⛲"
     }
 
