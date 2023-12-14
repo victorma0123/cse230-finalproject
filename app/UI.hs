@@ -76,7 +76,7 @@ handleEvent :: Game -> BrickEvent Name Tick -> EventM Name (Next Game)
 handleEvent g (VtyEvent (V.EvKey V.KEnter [])) = continue $
   case inEvent g of
     Nothing -> g
-    Just e -> updateGameState $ effect (choices e !! iChoice g) g
+    Just e -> updateGameState $ effect (choices e !! iChoice g) g 
 -- Handle for moving
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'w') [])) =
   continue $ moveAndUpdateBattleState (0, -1) g
@@ -250,27 +250,27 @@ drawUI g
 drawGameOverScreen :: Widget Name
 drawGameOverScreen =
   center $
-    borderWithLabel (str "                                Game Over!                      ") $
+    borderWithLabel (str "                         _,.-------.,_                   ") $
       ( padAll 1 $
           vBox
-            [ str "                                ,;~' Press q to exit'~;,                             ",
+            [ str "                                ,;~'                 ~;,                             ",
               str "                              ,;                     ;,                           ",
               str "                             ;                         ;                          ",
               str "                            ,'                         ',                         ",
               str "                           ,;                           ;,                        ",
               str "                          ; ;      .           .      ; ;                        ",
               str "                          | ;   ______       ______   ; |                        ",
-              str "                          |  `/~\"     ~\" . \"~     \"~\\'  |                        ",
-              str "                          |  ~  ,-~~~^~, | ,~^~~~-,  ~  |                        ",
-              str "                           |   |        }:{        |   |                         ",
-              str "                           |   l       / | \\       !   |                         ",
-              str "                           .~  (__,.--\" .^. \"--.,__)  ~.                         ",
-              str "                           |     ---;' / | \\ `;---     |                         ",
-              str "                            \\__.       \\/^\\/       .__/                          ",
-              str "                             V| \\                 / |V                           ",
+              str "                        |  `/~\"     ~\" . \"~     \"~\\'  |                        ",
+              str "                         |  ~  ,-~~~^~, | ,~^~~~-,  ~  |                        ",
+              str "                          |   |        }:{        |   |                         ",
+              str "                          |   l       / | \\       !   |                         ",
+              str "                          .~  (__,.--\" .^. \"--.,__)  ~.                         ",
+              str "                         |     ---;' / | \\ `;---     |                         ",
+              str "                         \\__.       \\/^\\/       .__/                          ",
+              str "                           V| \\                 / |V                           ",
               str "       __                  | |T~\\___!___!___/~T| |                  _____     ",
-              str "    .-~  ~\"-.              | |`IIII_I_I_I_IIII'| |               .-~     \"-.  ",
-              str "   /         \\             | |\\,III I I I III,/| |              /           Y ",
+              str "    .-~  ~\"-.              | |`   Game Over!  '| |               .-~     \"-.  ",
+              str "   /         \\             | |\\Press q to exit/| |              /           Y ",
               str "  Y          ;              \\   `~~~~~~~~~~'    /               i           | ",
               str "  `.   _     `._              \\   .       .   /               __)         .'  ",
               str "    )=~         `-.._           \\  .`/ \\ '.  /           _..-'~         ~\"<_   ",
@@ -318,7 +318,7 @@ createCell x y g =
             then str "☺️" -- 用 "☺️" 表示玩家
             else case getEvent x y g of
               Nothing -> str " " -- 空白表示空单元格
-              Just e -> icon e -- 用事件的图标表示事件
+              Just e -> if  isused e then str" "  else icon e -- 用事件的图标表示事件
 
 -- Status Bar
 drawStatus :: Game -> Widget n
@@ -347,7 +347,8 @@ drawEvent :: Game -> Widget n
 drawEvent g =
   case inEvent g of
     Nothing -> str ""
-    (Just event) ->
+    (Just event) -> 
+      if isused event then str " " else
       str ("Event: " ++ name event)
         <=> str (description event)
         <=> vBox
@@ -358,7 +359,7 @@ drawEvent g =
                 else emptyWidget
             )
               <+> str ("Choice " ++ show (i + 1) ++ ": " ++ title (choices event !! i))
-            | i <- [0 .. length (choices event) - 1]
+            | i <- [0 .. length (choices event) - 1] 
           ]
 
 -- debug logs

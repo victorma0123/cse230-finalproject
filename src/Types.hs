@@ -37,7 +37,8 @@ data GameEvent = GEvent
     name :: String,
     description :: String,
     choices :: [EventChoice],
-    icon :: Widget Name
+    icon :: Widget Name,
+    isused :: Bool
   }
 
 data EventChoice = GChoice

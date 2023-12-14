@@ -24,14 +24,15 @@ sleepEvent =
       choices =
         [ GChoice
             { title = "sleep for 10 hours",
-              effect = \g -> g {hp = hp g + 2}
+              effect = \g -> g {hp = hp g + 2},
             },
           GChoice
             { title = "sleep for 5 hours",
               effect = \g -> g {hp = hp g + 1}
             }
         ],
-      icon = str "s"
+      icon = str "s",
+      isused = False
     }
 
 -- Monster Encounter
@@ -44,6 +45,7 @@ goblinRaiderEvent =
       description = "A sneaky Goblin Raider jumps out!",
       choices = [fightChoice, useItemChoice, fleeChoice],
       icon = str "G"
+      ,isused = False
     }
 
 forestNymphEvent :: GameEvent
@@ -55,6 +57,7 @@ forestNymphEvent =
       description = "A mystical Forest Nymph appears!",
       choices = [fightChoice, useItemChoice, fleeChoice],
       icon = str "F"
+      ,isused = False
     }
 
 mountainTrollEvent :: GameEvent
@@ -66,6 +69,7 @@ mountainTrollEvent =
       description = "A formidable Mountain Troll blocks your path!",
       choices = [fightChoice, useItemChoice, fleeChoice],
       icon = str "T"
+      ,isused = False
     }
 
 shadowAssassinEvent :: GameEvent
@@ -77,6 +81,7 @@ shadowAssassinEvent =
       description = "A deadly Shadow Assassin emerges from the shadows!",
       choices = [fightChoice, useItemChoice, fleeChoice],
       icon = str "S"
+      ,isused = False
     }
 
 gameMonsterEqual :: Monster -> Monster -> Bool
@@ -185,7 +190,8 @@ treasureChest =
       name = "Treasure Chest",
       description = "You've found a treasure chest!",
       choices = [openChestChoice],
-      icon = str "✩"
+      icon = str "✩",
+      isused = False
     }
 
 openChestChoice :: EventChoice
@@ -217,6 +223,7 @@ ancientShrineEncounter = GEvent
     description = "You encounter a mysterious ancient shrine in the forest.",
     choices = [offerStrengthChoice, meditateChoice],
     icon = str "A"
+    ,isused = False
   }
 
 offerStrengthChoice :: EventChoice
@@ -243,6 +250,7 @@ mysteriousTraveler = GEvent
     description = "You meet a mysterious traveler at a crossroads.",
     choices = [shareMealChoice, trainTogetherChoice],
     icon = str "M"
+    ,isused = False
   }
 
 shareMealChoice :: EventChoice
@@ -266,6 +274,7 @@ lostTreasureChest = GEvent
     description = "You find a lost treasure chest in a hidden cave.",
     choices = [forceOpenChoice, carefullyUnlockChoice],
     icon = str "T"
+    ,isused = False
   }
 
 forceOpenChoice :: EventChoice
@@ -296,6 +305,7 @@ enchantedLake = GEvent
     description = "You discover an enchanted lake that glows under the moonlight.",
     choices = [batheInLakeChoice, searchAroundChoice],
     icon = str "L"
+    ,isused = False
   }
 
 batheInLakeChoice :: EventChoice
@@ -319,6 +329,7 @@ ancientLibrary = GEvent
     description = "You find yourself in a library filled with ancient tomes.",
     choices = [studyAncientTomesChoice, searchForSecretsChoice],
     icon = str "I"
+    ,isused = False
   }
 
 studyAncientTomesChoice :: EventChoice
