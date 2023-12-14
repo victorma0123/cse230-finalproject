@@ -39,7 +39,9 @@ initialState =
       monsters = [Monster 9 4 "Goblin Raider" 30 8, Monster 26 4 "Forest Nymph" 20 6, Monster 9 14 "Mountain Troll" 50 10, Monster 26 14 "Shadow Assassin" 40 12],
       inMonster = Nothing,
       gameOver = False,
-      mountains = [Mountain 17 12, Mountain 18 12, Mountain 19 12, Mountain 17 13, Mountain 19 13, Mountain 17 14, Mountain 18 14, Mountain 19 14,
+      winner = False,
+      loser = False,
+      mountains = [Mountain 17 12, Mountain 19 12, Mountain 17 13, Mountain 19 13, Mountain 17 14, Mountain 18 14, Mountain 19 14,
              -- New mountains for Goblin Raider
              Mountain 5 1, Mountain 6 1, Mountain 7 1, Mountain 8 1, Mountain 9 1, Mountain 10 1, Mountain 11 1, Mountain 12 1,
              Mountain 5 2, Mountain 12 2, Mountain 5 3, Mountain 12 3, Mountain 5 4, Mountain 12 4, Mountain 5 5, Mountain 12 5,
@@ -76,5 +78,6 @@ initialEvents =
     mysteriousTraveler,
     lostTreasureChest,
     enchantedLake,
-    ancientLibrary
+    ancientLibrary,
+    finalConfrontation
   ]
