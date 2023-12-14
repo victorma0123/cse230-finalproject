@@ -27,6 +27,7 @@ library
   exposed-modules:
       Debug
       Types
+      Utils
   other-modules:
       Paths_cse230
   autogen-modules:

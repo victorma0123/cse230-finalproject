@@ -4,6 +4,7 @@
 module Types where
 
 import Brick (Widget)
+import Data.Map (Map)
 
 -- Types
 
@@ -15,16 +16,16 @@ data Game = Game
     sword :: Int,
     hp :: Int,
     attack :: Int,
-    events :: [GameEvent],
+    eventsMap :: Map (Int, Int) [GameEvent],
     iChoice :: Int,
     inEvent :: Maybe GameEvent,
-    monsters :: [Monster],
+    monstersMap :: Map (Int, Int) [Monster],
     -- track the position of the monster
     -- that we are facing so that we can remove
     -- it after it is defeated
     inMonster :: Maybe Monster,
     gameOver :: Bool,
-    mountains :: [Mountain],
+    mountainsMap :: Map (Int, Int) [Mountain],
     -- debug logs
     displayLogs :: Bool,
     logs :: [String]

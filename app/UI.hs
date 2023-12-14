@@ -28,36 +28,13 @@ import Brick.Widgets.Center
 import Brick.Widgets.Core
 import Control.Monad.IO.Class (liftIO)
 import Data.List (find)
+import Data.Map (insert)
 import Debug
 import GameLogic
 import qualified Graphics.Vty as V
 import Init
 import Types
-
--- global config
--- this is because one column take less space than one row.
--- Multiply this value on column to make it an rough square
-
-gRow2Col :: Int
-gRow2Col = 2
-
-gWidth :: Int
-gWidth = 40
-
-gMapRows :: Int
-gMapRows = 26
-
-gMapCols :: Int
-gMapCols = 36
-
-gMapHeight :: Int
-gMapHeight = 20
-
-gBarHeight :: Int
-gBarHeight = 6
-
-inf :: Int
-inf = 1000000
+import Utils
 
 -- 定义绿色属性
 greenAttr :: AttrName
@@ -117,8 +94,13 @@ handleEvent g (AppEvent Tick) = do
               then return m
               else moveMonster m g
         )
-        (monsters g)
-  let updatedGame = checkForEncounters g {monsters = newMonsters}
+        (getCurrentRegionMonsters g)
+  let updatedGame =
+        checkForEncounters
+          g
+            { monstersMap =
+                insert (getMapRegionCoord (posX g, posY g)) newMonsters (monstersMap g)
+            }
   continue updatedGame
 handleEvent g _ = continue g
 
@@ -132,7 +114,7 @@ checkGameOver game =
 -- Determine if meeting with one of the monsters
 isMonsterEncounter :: Game -> Bool
 isMonsterEncounter game =
-  any (\m -> monsterPosX m == posX game && monsterPosY m == posY game) (monsters game)
+  any (\m -> monsterPosX m == posX game && monsterPosY m == posY game) (getCurrentRegionMonsters game)
 
 -- Helper function to handle player movement
 movePlayerHelper :: (Int, Int) -> Game -> Game
@@ -151,7 +133,7 @@ movePlayerMountain :: (Int, Int) -> Game -> Game
 movePlayerMountain (dx, dy) game =
   let newX = posX game + dx
       newY = posY game + dy
-      isMountain = any (\m -> mountainPosX m == newX && mountainPosY m == newY) (mountains game)
+      isMountain = any (\m -> mountainPosX m == newX && mountainPosY m == newY) (getMapRegionMountains (newX, newY) game)
    in if isMountain
         then game -- 如果新位置有山脉，则不移动玩家
         else movePlayerHelper (dx, dy) game
@@ -170,7 +152,7 @@ charToChoiceIndex char = fromEnum char - fromEnum '1'
 
 checkForEncounters :: Game -> Game
 checkForEncounters game =
-  case find (\m -> monsterPosX m == posX game && monsterPosY m == posY game) (monsters game) of
+  case find (\m -> monsterPosX m == posX game && monsterPosY m == posY game) (getCurrentRegionMonsters game) of
     Just monster -> game {inEvent = Just (getMonsterEvent (monsterName monster))}
     Nothing -> game -- No changes if no encounters
 
@@ -201,10 +183,10 @@ monsterIcon name = case name of
   _ -> "🀅" -- Default icon for other monsters
 
 isMonsterAt :: Int -> Int -> Game -> Bool
-isMonsterAt x y game = any (\m -> monsterPosX m == x && monsterPosY m == y) (monsters game)
+isMonsterAt x y game = any (\m -> monsterPosX m == x && monsterPosY m == y) (getCurrentRegionMonsters game)
 
 getMonsterAt :: Int -> Int -> Game -> Maybe Monster
-getMonsterAt x y game = find (\m -> monsterPosX m == x && monsterPosY m == y) (monsters game)
+getMonsterAt x y game = find (\m -> monsterPosX m == x && monsterPosY m == y) (getCurrentRegionMonsters game)
 
 -- Drawing
 -- getEvent :: Int -> Int -> Game -> Maybe GameEvent
@@ -256,12 +238,12 @@ drawGameOverScreen =
 
 -- Create the map
 drawMap :: Game -> Widget Name
-drawMap g = vBox [createRow y g | y <- [0 .. gMapRows]]
+drawMap g = vBox [createRow y g | y <- [0 .. gMapRows - 1]]
 
 -- Create the row in map
 createRow :: Int -> Game -> Widget Name
 createRow y g =
-  let mapCells = [setAvailableSize (gRow2Col, 1) $ center $ createCell x y g | x <- [0 .. gMapCols]] -- 生成一行中的每个格子
+  let mapCells = [setAvailableSize (gRow2Col, 1) $ center $ createCell x y g | x <- [0 .. gMapCols - 1]] -- 生成一行中的每个格子
    in hBox mapCells
 
 -- Create cells in map
@@ -290,7 +272,7 @@ drawStatus g =
 
 -- Get current event
 getEvent :: Int -> Int -> Game -> Maybe GameEvent
-getEvent x y game = find (\e -> eventX e == x && eventY e == y) (events game)
+getEvent x y game = find (\e -> eventX e == x && eventY e == y) (getCurrentRegionEvents game)
 
 renderMountain :: Int -> Int -> Game -> Maybe (Widget Name)
 renderMountain x y game =
@@ -299,7 +281,7 @@ renderMountain x y game =
     else Nothing
 
 isMountainAt :: Int -> Int -> Game -> Bool
-isMountainAt x y game = any (\m -> mountainPosX m == x && mountainPosY m == y) (mountains game)
+isMountainAt x y game = any (\m -> mountainPosX m == x && mountainPosY m == y) (getCurrentRegionMountains game)
 
 -- Event Bar
 drawEvent :: Game -> Widget n

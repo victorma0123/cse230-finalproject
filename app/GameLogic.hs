@@ -1,10 +1,11 @@
 module GameLogic where
 
 import Brick (str)
+import Data.Map (insert, update)
 import Debug (appendKeyValueLog, appendLogsToGame)
 import System.Random (randomRIO)
 import Types
-
+import Utils
 
 -- current implementation only checks whether two monsters are at the
 -- same position. An corner case is that two (different) monster may
@@ -99,9 +100,6 @@ updateGameState game =
     then game {gameOver = True}
     else game
 
-updateMonstersInGame :: [Monster] -> Game -> Game
-updateMonstersInGame m game = game {monsters = m}
-
 fightMonster :: Game -> Game
 fightMonster game =
   updateGameState $
@@ -114,10 +112,18 @@ fightMonster game =
             newMonsterHp = max 0 (monsterHp monster - attack game)
             logs' = appendKeyValueLog "new monster hp" (show newMonsterHp) logs
             updatedMonster = monster {monsterHp = newMonsterHp}
-            updatedMonsters = replaceMonsterInList monster updatedMonster (monsters game)
-            gameUpdatedMonster = game {monsters = updatedMonsters}
+            updatedMonsters =
+              replaceMonsterInList
+                monster
+                updatedMonster
+                ( getCurrentRegionMonsters game
+                )
+            -- gameUpdatedMonster = game {monsters = updatedMonsters}
             isMonsterDefeated = newMonsterHp <= 0
-            finalMonsters = if isMonsterDefeated then filter (not . gameMonsterEqual monster) updatedMonsters else monsters game
+            finalMonsters =
+              if isMonsterDefeated
+                then filter (not . gameMonsterEqual monster) updatedMonsters
+                else getCurrentRegionMonsters game
             gameOverUpdate = hp game == 0
             bonusGain = getBonusForMonster (monsterName monster)
             -- remove the defeated monster (not the monster event!)
@@ -128,12 +134,12 @@ fightMonster game =
             -- To remove a monster in map, we need to remove it from the monsters, not events.
             -- also set inEvent to Nothing, otherwise, even if the monster is defeated, the UI (event bar) will not be updated
             -- TODO: fix the corner case, where multiple monsters are at the same position. In that case, we cannot set inEvent to Nothing
-            evt = if isMonsterDefeated then Nothing else inEvent gameUpdatedMonster
-            updatedGame = if isMonsterDefeated then applyBonus bonusGain gameUpdatedMonster else gameUpdatedMonster
+            evt = if isMonsterDefeated then Nothing else inEvent game
+            updatedGame = if isMonsterDefeated then applyBonus bonusGain game else game
          in appendLogsToGame logs' $
               updatedGame
                 { hp = newPlayerHp,
-                  monsters = finalMonsters,
+                  monstersMap = insert (getMapRegionCoord (posX game, posY game)) finalMonsters (monstersMap game),
                   gameOver = gameOverUpdate,
                   inEvent = evt,
                   -- need to update the inMonster. Otherwise, it still points to the old monster (whose hp is not decreased yet)
@@ -182,9 +188,10 @@ moveMonster monster game = do
         4 -> (1, 0) -- Move right
       newX = monsterPosX monster + dx
       newY = monsterPosY monster + dy
-      isMountain = any (\m -> mountainPosX m == newX && mountainPosY m == newY) (mountains game)
+      isMountain = any (\m -> mountainPosX m == newX && mountainPosY m == newY) (getMapRegionMountains (newX, newY) game)
   if isMountain
     then return monster -- 如果新位置有山脉，怪物保持不动
+    -- TODO: change the monsterMap if the monster goes to another region of the map
     else return $ monster {monsterPosX = newX, monsterPosY = newY}
 
 -- Treasure Chest
@@ -221,128 +228,142 @@ openChest game =
 
 -- Ancient Shrine
 ancientShrineEncounter :: GameEvent
-ancientShrineEncounter = GEvent
-  { eventX = 7,
-    eventY = 7,
-    name = "Ancient Shrine Encounter",
-    description = "You encounter a mysterious ancient shrine in the forest.",
-    choices = [offerStrengthChoice, meditateChoice],
-    icon = str "A"
-  }
+ancientShrineEncounter =
+  GEvent
+    { eventX = 7,
+      eventY = 7,
+      name = "Ancient Shrine Encounter",
+      description = "You encounter a mysterious ancient shrine in the forest.",
+      choices = [offerStrengthChoice, meditateChoice],
+      icon = str "A"
+    }
 
 offerStrengthChoice :: EventChoice
-offerStrengthChoice = GChoice
-  { title = "Offer Strength",
-    effect = \game -> 
-      if attack game > 3 
-      then game { attack = attack game - 3, sword = sword game + 10 } 
-      else game
-  }
+offerStrengthChoice =
+  GChoice
+    { title = "Offer Strength",
+      effect = \game ->
+        if attack game > 3
+          then game {attack = attack game - 3, sword = sword game + 10}
+          else game
+    }
 
 meditateChoice :: EventChoice
-meditateChoice = GChoice
-  { title = "Meditate",
-    effect = \game -> game { shield = shield game + 5 }
-  }
+meditateChoice =
+  GChoice
+    { title = "Meditate",
+      effect = \game -> game {shield = shield game + 5}
+    }
 
 -- Mysterious Traveler
 mysteriousTraveler :: GameEvent
-mysteriousTraveler = GEvent
-  { eventX = 14,
-    eventY = 7,
-    name = "Mysterious Traveler",
-    description = "You meet a mysterious traveler at a crossroads.",
-    choices = [shareMealChoice, trainTogetherChoice],
-    icon = str "M"
-  }
+mysteriousTraveler =
+  GEvent
+    { eventX = 14,
+      eventY = 7,
+      name = "Mysterious Traveler",
+      description = "You meet a mysterious traveler at a crossroads.",
+      choices = [shareMealChoice, trainTogetherChoice],
+      icon = str "M"
+    }
 
 shareMealChoice :: EventChoice
-shareMealChoice = GChoice
-  { title = "Share a meal",
-    effect = \game -> game { hp = hp game - 10, shield = shield game + 10 }
-  }
+shareMealChoice =
+  GChoice
+    { title = "Share a meal",
+      effect = \game -> game {hp = hp game - 10, shield = shield game + 10}
+    }
 
 trainTogetherChoice :: EventChoice
-trainTogetherChoice = GChoice
-  { title = "Train together",
-    effect = \game -> game { attack = attack game + 3 }
-  }
+trainTogetherChoice =
+  GChoice
+    { title = "Train together",
+      effect = \game -> game {attack = attack game + 3}
+    }
 
 -- Lost Treasure Chest
 lostTreasureChest :: GameEvent
-lostTreasureChest = GEvent
-  { eventX = 16,
-    eventY = 4,
-    name = "Lost Treasure Chest",
-    description = "You find a lost treasure chest in a hidden cave.",
-    choices = [forceOpenChoice, carefullyUnlockChoice],
-    icon = str "T"
-  }
+lostTreasureChest =
+  GEvent
+    { eventX = 16,
+      eventY = 4,
+      name = "Lost Treasure Chest",
+      description = "You find a lost treasure chest in a hidden cave.",
+      choices = [forceOpenChoice, carefullyUnlockChoice],
+      icon = str "T"
+    }
 
 forceOpenChoice :: EventChoice
-forceOpenChoice = GChoice
-  { title = "Force open",
-    effect = \game -> 
-      if attack game > 20 
-      then game { hp = hp game + 5, shield = shield game + 5 } 
-      else game
-  }
+forceOpenChoice =
+  GChoice
+    { title = "Force open",
+      effect = \game ->
+        if attack game > 20
+          then game {hp = hp game + 5, shield = shield game + 5}
+          else game
+    }
 
 carefullyUnlockChoice :: EventChoice
-carefullyUnlockChoice = GChoice
-  { title = "Carefully unlock",
-    effect = \game -> 
-      if sword game > 15 
-      then game { hp = hp game + 10 }  -- Assuming finding gold impacts hp positively
-      else game
-  }
-
+carefullyUnlockChoice =
+  GChoice
+    { title = "Carefully unlock",
+      effect = \game ->
+        if sword game > 15
+          then game {hp = hp game + 10} -- Assuming finding gold impacts hp positively
+          else game
+    }
 
 --  Enchanted Lake
 enchantedLake :: GameEvent
-enchantedLake = GEvent
-  { eventX = 3,
-    eventY = 13,
-    name = "Enchanted Lake",
-    description = "You discover an enchanted lake that glows under the moonlight.",
-    choices = [batheInLakeChoice, searchAroundChoice],
-    icon = str "L"
-  }
+enchantedLake =
+  GEvent
+    { eventX = 3,
+      eventY = 13,
+      name = "Enchanted Lake",
+      description = "You discover an enchanted lake that glows under the moonlight.",
+      choices = [batheInLakeChoice, searchAroundChoice],
+      icon = str "L"
+    }
 
 batheInLakeChoice :: EventChoice
-batheInLakeChoice = GChoice
-  { title = "Bathe in the lake",
-    effect = \game -> game { hp = 150 }  -- Assuming full heal plus extra HP
-  }
+batheInLakeChoice =
+  GChoice
+    { title = "Bathe in the lake",
+      effect = \game -> game {hp = 150} -- Assuming full heal plus extra HP
+    }
 
 searchAroundChoice :: EventChoice
-searchAroundChoice = GChoice
-  { title = "Search around the lake",
-    effect = \game -> game -- Implementation depends on what the random bonuses are
-  }
+searchAroundChoice =
+  GChoice
+    { title = "Search around the lake",
+      effect = \game -> game -- Implementation depends on what the random bonuses are
+    }
 
 -- Ancient Library
 ancientLibrary :: GameEvent
-ancientLibrary = GEvent
-  { eventX = 2,
-    eventY = 9,
-    name = "The Ancient Library",
-    description = "You find yourself in a library filled with ancient tomes.",
-    choices = [studyAncientTomesChoice, searchForSecretsChoice],
-    icon = str "I"
-  }
+ancientLibrary =
+  GEvent
+    { eventX = 2,
+      eventY = 9,
+      name = "The Ancient Library",
+      description = "You find yourself in a library filled with ancient tomes.",
+      choices = [studyAncientTomesChoice, searchForSecretsChoice],
+      icon = str "I"
+    }
 
 studyAncientTomesChoice :: EventChoice
-studyAncientTomesChoice = GChoice
-  { title = "Study ancient tomes",
-    effect = \game -> 
-      if sword game >= 10  -- Adjust the threshold for 'high Sword' as needed
-      then game { attack = attack game + 5 } 
-      else game
-  }
+studyAncientTomesChoice =
+  GChoice
+    { title = "Study ancient tomes",
+      effect = \game ->
+        if sword game >= 10 -- Adjust the threshold for 'high Sword' as needed
+          then game {attack = attack game + 5}
+          else game
+    }
 
 searchForSecretsChoice :: EventChoice
-searchForSecretsChoice = GChoice
-  { title = "Search for secret passages",
-    effect = \game -> game -- Effect depends on how you want to handle map discovery
-  }
+searchForSecretsChoice =
+  GChoice
+    { title = "Search for secret passages",
+      effect = \game -> game -- Effect depends on how you want to handle map discovery
+    }
