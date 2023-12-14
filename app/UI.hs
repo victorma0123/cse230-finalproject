@@ -318,7 +318,7 @@ createCell x y g =
             then str "☺️" -- 用 "☺️" 表示玩家
             else case getEvent x y g of
               Nothing -> str " " -- 空白表示空单元格
-              Just e -> icon e -- 用事件的图标表示事件
+              Just e -> if isused e then str" " else icon e -- 用事件的图标表示事件
 
 -- Status Bar
 drawStatus :: Game -> Widget n
@@ -347,7 +347,7 @@ drawEvent :: Game -> Widget n
 drawEvent g =
   case inEvent g of
     Nothing -> str ""
-    (Just event) ->
+    (Just event) -> if isused event then str "" else 
       str ("Event: " ++ name event)
         <=> str (description event)
         <=> vBox
