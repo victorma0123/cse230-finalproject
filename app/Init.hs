@@ -81,16 +81,16 @@ initialEvents =
   ]
 
 generateSpiralMountains :: Int -> Int -> [Mountain]
-generateSpiralMountains rows cols = generateSpiralMountainsHelper 1 0 rows cols False
+generateSpiralMountains rows cols = [Mountain 5 3, Mountain 5 4, Mountain 5 5] ++ generateSpiralMountainsHelper 1 0 rows cols False
 
 generateSpiralMountainsHelper :: Int -> Int -> Int -> Int -> Bool -> [Mountain]
 generateSpiralMountainsHelper startX startY height width changeDirection
   | height <= 1 || width <= 1 = []
   | otherwise =
       if changeDirection
-      then [Mountain x startY | x <- [(startX + 1)..startX + width - 1]] ++ 
-           [Mountain (startX + width - 1) y | y <- [startY..startY + height - 1]] ++ 
-           generateSpiralMountainsHelper (startX + 1) (startY + 1) (height - 2) (width - 2) False
-      else [Mountain startX y | y <- [(startY)..startY + height - 1]] ++ 
-           [Mountain x (startY + height - 1) | x <- [(startX + 1)..startX + width - 2]] ++
-           generateSpiralMountainsHelper (startX + 1) (startY + 1) (height - 2) (width - 2) True
+      then [Mountain x startY | x <- [(startX + 2)..startX + width - 1]] ++ 
+           [Mountain (startX + width - 1) y | y <- [(startY)..startY + height]] ++ 
+           generateSpiralMountainsHelper (startX + 2) (startY + 2) (height - 4) (width - 4) False
+      else [Mountain startX y | y <- [(startY + 2)..startY + height - 1]] ++ 
+           [Mountain x (startY + height - 1) | x <- [(startX + 1)..startX + width - 3]] ++
+           generateSpiralMountainsHelper (startX + 2) (startY + 2) (height - 4) (width - 4) True

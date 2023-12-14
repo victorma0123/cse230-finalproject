@@ -385,7 +385,7 @@ finalConfrontation :: GameEvent
 finalConfrontation =
   GEvent
     { eventX = 19,
-      eventY = 8,
+      eventY = 9,
       name = "Final Confrontation: The Dark Overlord's Lair",
       description = "You stand before the lair of the Dark Overlord, ready for the final battle.",
       choices = [directAssaultChoice, sneakAttackChoice], -- Added sneak attack choice
