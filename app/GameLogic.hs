@@ -21,8 +21,8 @@ import Utils
 sleepEvent :: GameEvent
 sleepEvent =
   GEvent
-    { eventX = 10,
-      eventY = 10,
+    { eventX = 5,
+      eventY = 5,
       name = "sleep!",
       description = "Sleeping will help recover HP",
       choices =
@@ -236,8 +236,8 @@ openChest game =
 ancientShrineEncounter :: GameEvent
 ancientShrineEncounter =
   GEvent
-    { eventX = 7,
-      eventY = 7,
+    { eventX = 4,
+      eventY = 6,
       name = "Ancient Shrine Encounter",
       description = "You encounter a mysterious ancient shrine in the forest.",
       choices = [offerStrengthChoice, meditateChoice],
@@ -266,8 +266,8 @@ meditateChoice =
 mysteriousTraveler :: GameEvent
 mysteriousTraveler =
   GEvent
-    { eventX = 14,
-      eventY = 7,
+    { eventX = 9,
+      eventY = 8,
       name = "Mysterious Traveler",
       description = "You meet a mysterious traveler at a crossroads.",
       choices = [shareMealChoice, trainTogetherChoice],
@@ -293,8 +293,8 @@ trainTogetherChoice =
 lostTreasureChest :: GameEvent
 lostTreasureChest =
   GEvent
-    { eventX = 16,
-      eventY = 4,
+    { eventX = 12,
+      eventY = 17,
       name = "Lost Treasure Chest",
       description = "You find a lost treasure chest in a hidden cave.",
       choices = [forceOpenChoice, carefullyUnlockChoice],
@@ -326,8 +326,8 @@ carefullyUnlockChoice =
 enchantedLake :: GameEvent
 enchantedLake =
   GEvent
-    { eventX = 3,
-      eventY = 13,
+    { eventX = 18,
+      eventY = 14,
       name = "Enchanted Lake",
       description = "You discover an enchanted lake that glows under the moonlight.",
       choices = [batheInLakeChoice, searchAroundChoice],
@@ -353,8 +353,8 @@ searchAroundChoice =
 ancientLibrary :: GameEvent
 ancientLibrary =
   GEvent
-    { eventX = 2,
-      eventY = 9,
+    { eventX = 22,
+      eventY = 25,
       name = "The Ancient Library",
       description = "You find yourself in a library filled with ancient tomes.",
       choices = [studyAncientTomesChoice, searchForSecretsChoice],
@@ -379,37 +379,17 @@ searchForSecretsChoice =
       effect = \game -> game -- Effect depends on how you want to handle map discovery
     }
 
--- -- Final Confrontation: The Dark Overlord's Lair Event
--- finalConfrontation :: GameEvent
--- finalConfrontation = GEvent
---   { eventX = 18,
---     eventY = 13,
---     name = "Final Confrontation: The Dark Overlord's Lair",
---     description = "You stand before the lair of the Dark Overlord, ready for the final battle.",
---     choices = [directAssaultChoice],
---     icon = str "D"
---     ,isused = False
---   }
-
--- directAssaultChoice :: EventChoice
--- directAssaultChoice = GChoice
---   { title = "Direct assault",
---     effect = \game ->
---       if hp game >= 150 && shield game >= 20 && attack game >= 20 && sword game >= 15
---       then game {winner = True}
---       else game {loser = True}
---   }
 
 -- Final Confrontation: The Dark Overlord's Lair Event
 finalConfrontation :: GameEvent
 finalConfrontation =
   GEvent
-    { eventX = 18,
-      eventY = 13,
+    { eventX = 19,
+      eventY = 8,
       name = "Final Confrontation: The Dark Overlord's Lair",
       description = "You stand before the lair of the Dark Overlord, ready for the final battle.",
       choices = [directAssaultChoice, sneakAttackChoice], -- Added sneak attack choice
-      icon = str "D",
+      icon = str "Ӝ",
       isused = False
     }
 
