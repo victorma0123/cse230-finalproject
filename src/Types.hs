@@ -31,7 +31,7 @@ data Game = Game
     displayLogs :: Bool,
     inBattle :: Bool,
     logs :: [String]
-  }
+  } 
 
 data GameEvent = GEvent
   { eventX :: Int,
@@ -43,7 +43,7 @@ data GameEvent = GEvent
     isused :: Bool
 
     
-  }
+  } 
 
 data EventChoice = GChoice
   { title :: String,

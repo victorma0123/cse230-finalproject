@@ -33,7 +33,7 @@ initialState =
       sword = 10,
       hp = 100,
       attack = 15,
-      events = initialEvents,
+      events = map (\e -> e { isused = False }) initialEvents,
       iChoice = -1,
       inEvent = Nothing,
       monsters = [Monster 9 4 "Goblin Raider" 30 8, Monster 26 4 "Forest Nymph" 20 6, Monster 9 14 "Mountain Troll" 50 10, Monster 26 14 "Shadow Assassin" 40 12],

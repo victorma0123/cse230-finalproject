@@ -70,13 +70,18 @@ theMap =
     V.defAttr
     [(greenAttr, fg V.green)]
 
+
+markEventAsUsed :: String -> [GameEvent] -> [GameEvent]
+markEventAsUsed usedEventName = map (\e -> if name e == usedEventName then e { isused = True } else e)
+
 -- Handling events
 
 handleEvent :: Game -> BrickEvent Name Tick -> EventM Name (Next Game)
 handleEvent g (VtyEvent (V.EvKey V.KEnter [])) = continue $
   case inEvent g of
     Nothing -> g
-    Just e -> updateGameState $ effect (choices e !! iChoice g) g
+    Just e -> let newGame = updateGameState $ effect (choices e !! iChoice g) g
+              in newGame { events = markEventAsUsed (name e) (events newGame) }
 -- Handle for moving
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'w') [])) =
   continue $ moveAndUpdateBattleState (0, -1) g
@@ -125,6 +130,7 @@ moveAndUpdateBattleState move g =
   in if any (== playerPos) monsterPos
      then updatedGame { inBattle = True } -- Enter battle state
      else updatedGame
+
 
 
 

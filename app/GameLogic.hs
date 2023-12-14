@@ -103,6 +103,7 @@ updateGameState game =
   if hp game <= 0
     then game {gameOver = True}
     else game
+  
 
 updateMonstersInGame :: [Monster] -> Game -> Game
 updateMonstersInGame m game = game {monsters = m}
