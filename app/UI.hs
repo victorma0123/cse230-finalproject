@@ -56,13 +56,13 @@ handleEvent g (VtyEvent (V.EvKey V.KEnter [])) = continue $
     Just e -> updateGameState $ effect (choices e !! iChoice g) g
 -- Handle for moving
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'w') [])) =
-  continue $ movePlayer (0, -1) g
+  genMapRegionIfNotExist $ movePlayer (0, -1) g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'a') [])) =
-  continue $ movePlayer (-1, 0) g
+  genMapRegionIfNotExist $ movePlayer (-1, 0) g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 's') [])) =
-  continue $ movePlayer (0, 1) g
+  genMapRegionIfNotExist $ movePlayer (0, 1) g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'd') [])) =
-  continue $ movePlayer (1, 0) g
+  genMapRegionIfNotExist $ movePlayer (1, 0) g
 -- Handle for quit game
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'q') [])) = halt g
 -- Handle make choice in event
@@ -249,17 +249,22 @@ createRow y g =
 -- Create cells in map
 createCell :: Int -> Int -> Game -> Widget Name
 createCell x y g =
-  case renderMountain x y g of
+  -- x and y are non-negative, need to be translated to world coordinate
+  case renderMountain wx wy g of
     Just mountainWidget -> mountainWidget
     Nothing ->
-      case renderMonster x y g of
+      case renderMonster wx wy g of
         Just w -> w
         Nothing ->
-          if (posX g == x) && (posY g == y)
+          if (posX g == wx) && (posY g == wy)
             then str "☺️" -- 用 "☺️" 表示玩家
-            else case getEvent x y g of
+            else case getEvent wx wy g of
               Nothing -> str " " -- 空白表示空单元格
               Just e -> icon e -- 用事件的图标表示事件
+  where
+    (cx, cy) = getMapRegionCoord (posX g, posY g)
+    wx = x + cx * gMapCols
+    wy = y + cy * gMapRows
 
 -- Status Bar
 drawStatus :: Game -> Widget n
