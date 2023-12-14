@@ -250,14 +250,50 @@ drawUI g
 drawGameOverScreen :: Widget Name
 drawGameOverScreen =
   center $
-    borderWithLabel (str "Game Over") $
+    borderWithLabel (str "                                Game Over!                      ") $
       ( padAll 1 $
           vBox
-            [ str "Game Over!",
-              str " ",
-              str "Press q to exit."
+            [ str "                                ,;~' Press q to exit'~;,                             ",
+              str "                              ,;                     ;,                           ",
+              str "                             ;                         ;                          ",
+              str "                            ,'                         ',                         ",
+              str "                           ,;                           ;,                        ",
+              str "                          ; ;      .           .      ; ;                        ",
+              str "                          | ;   ______       ______   ; |                        ",
+              str "                          |  `/~\"     ~\" . \"~     \"~\\'  |                        ",
+              str "                          |  ~  ,-~~~^~, | ,~^~~~-,  ~  |                        ",
+              str "                           |   |        }:{        |   |                         ",
+              str "                           |   l       / | \\       !   |                         ",
+              str "                           .~  (__,.--\" .^. \"--.,__)  ~.                         ",
+              str "                           |     ---;' / | \\ `;---     |                         ",
+              str "                            \\__.       \\/^\\/       .__/                          ",
+              str "                             V| \\                 / |V                           ",
+              str "       __                  | |T~\\___!___!___/~T| |                  _____     ",
+              str "    .-~  ~\"-.              | |`IIII_I_I_I_IIII'| |               .-~     \"-.  ",
+              str "   /         \\             | |\\,III I I I III,/| |              /           Y ",
+              str "  Y          ;              \\   `~~~~~~~~~~'    /               i           | ",
+              str "  `.   _     `._              \\   .       .   /               __)         .'  ",
+              str "    )=~         `-.._           \\  .`/ \\ '.  /           _..-'~         ~\"<_   ",
+              str " .-~                 ~`-.._       ^~~~^~~~^       _..-'~                   ~. ",
+              str "/                          ~`-.._           _..-'~                           Y",
+              str "{        .~\"-.                  ~`-.._ .-'~                  _..-~;         ;",
+              str " `._   _,'     ~`-.._                  ~`-.._           _..-'~     `._    _.- ",
+              str "    ~~\"              ~`-.._                  ~`-.._ .-'~              ~~\"~    ",
+              str "  .----.            _..-'  ~`-.._                  ~`-.._          .-~~~~-.   ",
+              str " /      `.    _..-'~             ~`-.._                  ~`-.._   (        \". ",
+              str "Y        `=--~                  _..-'  ~`-.._                  ~`-'         | ",
+              str "|                         _..-'~             ~`-.._                         ; ",
+              str "`._                 _..-'~                         ~`-.._            -._ _.'  ",
+              str "   \"-=\"      _..-'~                                     ~`-.._        ~`.    ",
+              str "    /        `.                                                ;          Y   ",
+              str "   Y           Y                   --           Y           |   ",
+              str "   |           ;                                              `.          /   ",
+              str "   `.       _.'                                                 \"-.____.-'    ",
+              str "     ~-----\"                                                                 "
+              
             ]
       )
+
 
 -- Create the map
 drawMap :: Game -> Widget Name
