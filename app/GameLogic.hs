@@ -31,7 +31,7 @@ sleepEvent =
               effect = \g -> g {hp = hp g + 1}
             }
         ],
-      icon = str "s",
+      icon = str "⏾",
       isused = False
     }
 
@@ -190,8 +190,7 @@ treasureChest =
       name = "Treasure Chest",
       description = "You've found a treasure chest!",
       choices = [openChestChoice],
-      icon = str "✩",
-      isused = False
+      icon = str "✩"
     }
 
 openChestChoice :: EventChoice
@@ -223,7 +222,6 @@ ancientShrineEncounter = GEvent
     description = "You encounter a mysterious ancient shrine in the forest.",
     choices = [offerStrengthChoice, meditateChoice],
     icon = str "A"
-    ,isused = False
   }
 
 offerStrengthChoice :: EventChoice
@@ -250,7 +248,6 @@ mysteriousTraveler = GEvent
     description = "You meet a mysterious traveler at a crossroads.",
     choices = [shareMealChoice, trainTogetherChoice],
     icon = str "M"
-    ,isused = False
   }
 
 shareMealChoice :: EventChoice
@@ -274,7 +271,6 @@ lostTreasureChest = GEvent
     description = "You find a lost treasure chest in a hidden cave.",
     choices = [forceOpenChoice, carefullyUnlockChoice],
     icon = str "T"
-    ,isused = False
   }
 
 forceOpenChoice :: EventChoice
@@ -305,7 +301,6 @@ enchantedLake = GEvent
     description = "You discover an enchanted lake that glows under the moonlight.",
     choices = [batheInLakeChoice, searchAroundChoice],
     icon = str "L"
-    ,isused = False
   }
 
 batheInLakeChoice :: EventChoice
@@ -329,7 +324,6 @@ ancientLibrary = GEvent
     description = "You find yourself in a library filled with ancient tomes.",
     choices = [studyAncientTomesChoice, searchForSecretsChoice],
     icon = str "I"
-    ,isused = False
   }
 
 studyAncientTomesChoice :: EventChoice
@@ -346,3 +340,24 @@ searchForSecretsChoice = GChoice
   { title = "Search for secret passages",
     effect = \game -> game -- Effect depends on how you want to handle map discovery
   }
+
+-- Final Confrontation: The Dark Overlord's Lair Event
+finalConfrontation :: GameEvent
+finalConfrontation = GEvent
+  { eventX = 18, 
+    eventY = 13,
+    name = "Final Confrontation: The Dark Overlord's Lair",
+    description = "You stand before the lair of the Dark Overlord, ready for the final battle.",
+    choices = [directAssaultChoice],
+    icon = str "D"
+  }
+
+directAssaultChoice :: EventChoice
+directAssaultChoice = GChoice
+  { title = "Direct assault",
+    effect = \game ->
+      if hp game >= 150 && shield game >= 20 && attack game >= 20 && sword game >= 15
+      then game {winner = True}
+      else game {loser = True}
+  }
+

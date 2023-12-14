@@ -24,6 +24,8 @@ data Game = Game
     -- it after it is defeated
     inMonster :: Maybe Monster,
     gameOver :: Bool,
+    winner :: Bool,
+    loser :: Bool,
     mountains :: [Mountain],
     -- debug logs
     displayLogs :: Bool,
