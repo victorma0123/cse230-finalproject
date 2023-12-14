@@ -51,7 +51,8 @@ initialState =
       mountainsMap =
         fromList
           [ ( (0, 0),
-              generateSpiralMountains 17 37
+              -- generateSpiralMountains 17 37
+              [Mountain 0 1]
             )
           ],
       winner = False,
