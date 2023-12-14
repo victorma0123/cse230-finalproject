@@ -28,6 +28,7 @@ dependencies:
   - linear
   - random
   - vty
+  - HUnit
 
 ghc-options:
   - -Wall
@@ -57,7 +58,7 @@ executables:
 tests:
   cse230-test:
     main: Spec.hs
-    source-dirs: test
+    source-dirs: test, app
     ghc-options:
       - -threaded
       - -rtsopts
