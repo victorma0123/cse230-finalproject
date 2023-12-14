@@ -159,7 +159,7 @@ useItem game =
    in game {hp = newHp}
 
 flee :: Game -> Game
-flee game = game {hp = max 0 (hp game - 5), inEvent = Nothing}
+flee game = game {hp = max 0 (hp game - 5), inEvent = Nothing, inBattle = False}
 
 moveMonster :: Monster -> Game -> IO Monster
 moveMonster monster game = do
