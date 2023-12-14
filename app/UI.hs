@@ -232,6 +232,8 @@ getMonsterAt x y game = find (\m -> monsterPosX m == x && monsterPosY m == y) (m
 -- Generate the interface
 drawUI :: Game -> [Widget Name]
 drawUI g
+  | winner g = [drawWinnerScreen] -- Show winning screen if winner is True
+  | loser g = [drawLoserScreen]   -- Show losing screen if loser is True
   | gameOver g = [drawGameOverScreen]
   | inBattle g = drawBattleScreen g -- 如果在战斗中，显示战斗界面
   | otherwise =
@@ -250,6 +252,39 @@ drawUI g
                         ]
                   ]
         ]
+
+
+drawWinnerScreen :: Widget Name
+drawWinnerScreen =
+  center $
+    withBorderStyle unicodeBold $
+      borderWithLabel (str " Victory! ") $
+        vBox
+          [ str "        ⭐         ",
+            str "       \\ | /       ",
+            str "        -O-        ",
+            str "       / | \\       ",
+            str "   Congratulations!",
+            str "       You won!    ",
+            str " Press 'q' to exit."
+          ]
+
+
+drawLoserScreen :: Widget Name
+drawLoserScreen =
+  center $
+    withBorderStyle unicodeBold $
+      borderWithLabel (str " Defeat ") $
+        vBox
+          [ str "       .-.        ",
+            str "     (o o) boo!   ",
+            str "     | O \\        ",
+            str "      \\   \\       ",
+            str "       `~~~'      ",
+            str "   You've been    ",
+            str "     defeated.    ",
+            str " Press 'q' to exit."
+          ]
 
 
 -- Game Over

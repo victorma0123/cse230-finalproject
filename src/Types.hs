@@ -30,7 +30,9 @@ data Game = Game
     -- debug logs
     displayLogs :: Bool,
     inBattle :: Bool,
-    logs :: [String]
+    logs :: [String],
+    finalMonsterHp :: Int,
+    finalMonsterAttack :: Int
   } 
 
 data GameEvent = GEvent

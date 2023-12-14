@@ -348,6 +348,27 @@ searchForSecretsChoice = GChoice
     effect = \game -> game -- Effect depends on how you want to handle map discovery
   }
 
+-- -- Final Confrontation: The Dark Overlord's Lair Event
+-- finalConfrontation :: GameEvent
+-- finalConfrontation = GEvent
+--   { eventX = 18, 
+--     eventY = 13,
+--     name = "Final Confrontation: The Dark Overlord's Lair",
+--     description = "You stand before the lair of the Dark Overlord, ready for the final battle.",
+--     choices = [directAssaultChoice],
+--     icon = str "D"
+--     ,isused = False
+--   }
+
+-- directAssaultChoice :: EventChoice
+-- directAssaultChoice = GChoice
+--   { title = "Direct assault",
+--     effect = \game ->
+--       if hp game >= 150 && shield game >= 20 && attack game >= 20 && sword game >= 15
+--       then game {winner = True}
+--       else game {loser = True}
+--   }
+
 -- Final Confrontation: The Dark Overlord's Lair Event
 finalConfrontation :: GameEvent
 finalConfrontation = GEvent
@@ -355,16 +376,33 @@ finalConfrontation = GEvent
     eventY = 13,
     name = "Final Confrontation: The Dark Overlord's Lair",
     description = "You stand before the lair of the Dark Overlord, ready for the final battle.",
-    choices = [directAssaultChoice],
-    icon = str "D"
-    ,isused = False
+    choices = [directAssaultChoice, sneakAttackChoice], -- Added sneak attack choice
+    icon = str "D",
+    isused = False
   }
 
+-- Direct Assault Choice
 directAssaultChoice :: EventChoice
 directAssaultChoice = GChoice
   { title = "Direct assault",
     effect = \game ->
-      if hp game >= 150 && shield game >= 20 && attack game >= 20 && sword game >= 15
-      then game {winner = True}
-      else game {loser = True}
+      let playerAttack = attack game + (sword game `div` 2) -- 50% bonus from sword
+          newMonsterHp = finalMonsterHp game - playerAttack
+          newPlayerHp = hp game - finalMonsterAttack game
+      in if newMonsterHp <= 0
+         then game {winner = True}
+         else game {finalMonsterHp = newMonsterHp, hp = newPlayerHp, loser = newPlayerHp <= 0}
+  }
+
+-- Sneak Attack Choice
+sneakAttackChoice :: EventChoice
+sneakAttackChoice = GChoice
+  { title = "Sneak attack",
+    effect = \game ->
+      let playerAttack = attack game + (shield game `div` 2) -- 50% bonus from shield
+          newMonsterHp = finalMonsterHp game - playerAttack
+          newPlayerHp = hp game - finalMonsterAttack game
+      in if newMonsterHp <= 0
+         then game {winner = True}
+         else game {finalMonsterHp = newMonsterHp, hp = newPlayerHp, loser = newPlayerHp <= 0}
   }

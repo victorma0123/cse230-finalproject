@@ -62,7 +62,9 @@ initialState =
       -- set it to True to display debug messages
       displayLogs = False,
       inBattle = False,
-      logs = []
+      logs = [],
+      finalMonsterHp = 150,
+      finalMonsterAttack = 20
     }
 
 
