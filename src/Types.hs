@@ -4,6 +4,7 @@
 module Types where
 
 import Brick (Widget)
+import Data.Map (Map)
 
 -- Types
 
@@ -15,25 +16,25 @@ data Game = Game
     sword :: Int,
     hp :: Int,
     attack :: Int,
-    events :: [GameEvent],
+    eventsMap :: Map (Int, Int) [GameEvent],
     iChoice :: Int,
     inEvent :: Maybe GameEvent,
-    monsters :: [Monster],
+    monstersMap :: Map (Int, Int) [Monster],
     -- track the position of the monster
     -- that we are facing so that we can remove
     -- it after it is defeated
     inMonster :: Maybe Monster,
     gameOver :: Bool,
+    mountainsMap :: Map (Int, Int) [Mountain],
     winner :: Bool,
     loser :: Bool,
-    mountains :: [Mountain],
     -- debug logs
     displayLogs :: Bool,
     inBattle :: Bool,
     logs :: [String],
     finalMonsterHp :: Int,
     finalMonsterAttack :: Int
-  } 
+  }
 
 data GameEvent = GEvent
   { eventX :: Int,
@@ -43,9 +44,7 @@ data GameEvent = GEvent
     choices :: [EventChoice],
     icon :: Widget Name,
     isused :: Bool
-
-    
-  } 
+  }
 
 data EventChoice = GChoice
   { title :: String,

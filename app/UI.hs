@@ -1,4 +1,5 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module UI where
 
@@ -28,36 +29,13 @@ import Brick.Widgets.Center
 import Brick.Widgets.Core
 import Control.Monad.IO.Class (liftIO)
 import Data.List (find)
+import Data.Map (Map, insert)
 import Debug
 import GameLogic
 import qualified Graphics.Vty as V
 import Init
 import Types
-
--- global config
--- this is because one column take less space than one row.
--- Multiply this value on column to make it an rough square
-
-gRow2Col :: Int
-gRow2Col = 2
-
-gWidth :: Int
-gWidth = 40
-
-gMapRows :: Int
-gMapRows = 26
-
-gMapCols :: Int
-gMapCols = 36
-
-gMapHeight :: Int
-gMapHeight = 20
-
-gBarHeight :: Int
-gBarHeight = 6
-
-inf :: Int
-inf = 1000000
+import Utils
 
 -- 定义绿色属性
 greenAttr :: AttrName
@@ -70,9 +48,18 @@ theMap =
     V.defAttr
     [(greenAttr, fg V.green)]
 
-
-markEventAsUsed :: String -> [GameEvent] -> [GameEvent]
-markEventAsUsed usedEventName = map (\e -> if name e == usedEventName then e { isused = True } else e)
+markEventAsUsed :: GameEvent -> Game -> Map (Int, Int) [GameEvent]
+markEventAsUsed evt g = insert key newEvents (eventsMap g)
+  where
+    key = getMapRegionCoord (eventX evt, eventY evt)
+    newEvents =
+      map
+        ( \e ->
+            if name e == name evt && eventX e == eventX evt && eventY e == eventY evt
+              then e {isused = True}
+              else e
+        )
+        (getCurrentRegionEvents g)
 
 -- Handling events
 
@@ -80,17 +67,18 @@ handleEvent :: Game -> BrickEvent Name Tick -> EventM Name (Next Game)
 handleEvent g (VtyEvent (V.EvKey V.KEnter [])) = continue $
   case inEvent g of
     Nothing -> g
-    Just e -> let newGame = updateGameState $ effect (choices e !! iChoice g) g
-              in newGame { events = markEventAsUsed (name e) (events newGame) }
+    Just e ->
+      let newGame = updateGameState $ effect (choices e !! iChoice g) g
+       in newGame {eventsMap = markEventAsUsed e g}
 -- Handle for moving
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'w') [])) =
-  continue $ moveAndUpdateBattleState (0, -1) g
+  genMapRegionIfNotExist $ moveAndUpdateBattleState (0, -1) g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'a') [])) =
-  continue $ moveAndUpdateBattleState (-1, 0) g
+  genMapRegionIfNotExist $ moveAndUpdateBattleState (-1, 0) g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 's') [])) =
-  continue $ moveAndUpdateBattleState (0, 1) g
+  genMapRegionIfNotExist $ moveAndUpdateBattleState (0, 1) g
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'd') [])) =
-  continue $ moveAndUpdateBattleState (1, 0) g
+  genMapRegionIfNotExist $ moveAndUpdateBattleState (1, 0) g
 -- Handle for quit game
 handleEvent g (VtyEvent (V.EvKey (V.KChar 'q') [])) = halt g
 -- Handle make choice in event
@@ -114,10 +102,21 @@ handleEvent g (VtyEvent (V.EvKey (V.KChar char) [])) = continue $
 -- Locking monster when meeting with player
 handleEvent g (AppEvent Tick) = do
   -- Move monsters only if they are not in an event with the player
-  newMonsters <- liftIO $ mapM (\m -> if isEngagedInEvent m g 
-                                      then return m 
-                                      else moveMonster m g) (monsters g)
-  let updatedGame = checkForEncounters g {monsters = newMonsters}
+  newMonsters <-
+    liftIO $
+      mapM
+        ( \m ->
+            if isEngagedInEvent m g
+              then return m
+              else moveMonster m g
+        )
+        (getCurrentRegionMonsters g)
+  let updatedGame =
+        checkForEncounters
+          g
+            { monstersMap =
+                insert (getMapRegionCoord (posX g, posY g)) newMonsters (monstersMap g)
+            }
   continue updatedGame
 handleEvent g _ = continue g
 
@@ -126,14 +125,10 @@ moveAndUpdateBattleState :: (Int, Int) -> Game -> Game
 moveAndUpdateBattleState move g =
   let updatedGame = movePlayer move g
       playerPos = (posX updatedGame, posY updatedGame)
-      monsterPos = map (\m -> (monsterPosX m, monsterPosY m)) (monsters updatedGame)
-  in if any (== playerPos) monsterPos
-     then updatedGame { inBattle = True } -- Enter battle state
-     else updatedGame
-
-
-
-
+      monsterPos = map (\m -> (monsterPosX m, monsterPosY m)) (getCurrentRegionMonsters updatedGame)
+   in if any (== playerPos) monsterPos
+        then updatedGame {inBattle = True} -- Enter battle state
+        else updatedGame
 
 -- Functions Used in handleEvent
 
@@ -145,7 +140,7 @@ checkGameOver game =
 -- Determine if meeting with one of the monsters
 isMonsterEncounter :: Game -> Bool
 isMonsterEncounter game =
-  any (\m -> monsterPosX m == posX game && monsterPosY m == posY game) (monsters game)
+  any (\m -> monsterPosX m == posX game && monsterPosY m == posY game) (getCurrentRegionMonsters game)
 
 -- Helper function to handle player movement
 movePlayerHelper :: (Int, Int) -> Game -> Game
@@ -164,7 +159,7 @@ movePlayerMountain :: (Int, Int) -> Game -> Game
 movePlayerMountain (dx, dy) game =
   let newX = posX game + dx
       newY = posY game + dy
-      isMountain = any (\m -> mountainPosX m == newX && mountainPosY m == newY) (mountains game)
+      isMountain = any (\m -> mountainPosX m == newX && mountainPosY m == newY) (getMapRegionMountains (newX, newY) game)
    in if isMountain
         then game -- 如果新位置有山脉，则不移动玩家
         else movePlayerHelper (dx, dy) game
@@ -183,7 +178,7 @@ charToChoiceIndex char = fromEnum char - fromEnum '1'
 
 checkForEncounters :: Game -> Game
 checkForEncounters game =
-  case find (\m -> monsterPosX m == posX game && monsterPosY m == posY game) (monsters game) of
+  case find (\m -> monsterPosX m == posX game && monsterPosY m == posY game) (getCurrentRegionMonsters game) of
     Just monster -> game {inEvent = Just (getMonsterEvent (monsterName monster))}
     Nothing -> game -- No changes if no encounters
 
@@ -214,10 +209,10 @@ monsterIcon name = case name of
   _ -> "🀅" -- Default icon for other monsters
 
 isMonsterAt :: Int -> Int -> Game -> Bool
-isMonsterAt x y game = any (\m -> monsterPosX m == x && monsterPosY m == y) (monsters game)
+isMonsterAt x y game = any (\m -> monsterPosX m == x && monsterPosY m == y) (getCurrentRegionMonsters game)
 
 getMonsterAt :: Int -> Int -> Game -> Maybe Monster
-getMonsterAt x y game = find (\m -> monsterPosX m == x && monsterPosY m == y) (monsters game)
+getMonsterAt x y game = find (\m -> monsterPosX m == x && monsterPosY m == y) (getCurrentRegionMonsters game)
 
 -- Drawing
 -- getEvent :: Int -> Int -> Game -> Maybe GameEvent
@@ -233,26 +228,25 @@ getMonsterAt x y game = find (\m -> monsterPosX m == x && monsterPosY m == y) (m
 drawUI :: Game -> [Widget Name]
 drawUI g
   | winner g = [drawWinnerScreen] -- Show winning screen if winner is True
-  | loser g = [drawLoserScreen]   -- Show losing screen if loser is True
+  | loser g = [drawLoserScreen] -- Show losing screen if loser is True
   | gameOver g = [drawGameOverScreen]
   | inBattle g = drawBattleScreen g -- 如果在战斗中，显示战斗界面
   | otherwise =
-    let mapRows = drawMap g
-     in [ joinBorders $
-            border $
-              hLimit (gWidth * gRow2Col) $
-                vBox
-                  [ setAvailableSize (gWidth * gRow2Col, gMapHeight) $ center $ border mapRows,
-                    hBorder,
-                    setAvailableSize (gWidth * gRow2Col, gBarHeight) $
-                      hBox
-                        [ hLimit (gWidth * gRow2Col `div` 2) $ vCenter $ padRight Max $ drawStatus g,
-                          vBorder,
-                          hLimit (gWidth * gRow2Col `div` 2) $ vCenter $ padRight Max $ drawEvent g
-                        ]
-                  ]
-        ]
-
+      let mapRows = drawMap g
+       in [ joinBorders $
+              border $
+                hLimit (gWidth * gRow2Col) $
+                  vBox
+                    [ setAvailableSize (gWidth * gRow2Col, gMapHeight) $ center $ border mapRows,
+                      hBorder,
+                      setAvailableSize (gWidth * gRow2Col, gBarHeight) $
+                        hBox
+                          [ hLimit (gWidth * gRow2Col `div` 2) $ vCenter $ padRight Max $ drawStatus g,
+                            vBorder,
+                            hLimit (gWidth * gRow2Col `div` 2) $ vCenter $ padRight Max $ drawEvent g
+                          ]
+                    ]
+          ]
 
 drawWinnerScreen :: Widget Name
 drawWinnerScreen =
@@ -269,7 +263,6 @@ drawWinnerScreen =
             str " Press 'q' to exit."
           ]
 
-
 drawLoserScreen :: Widget Name
 drawLoserScreen =
   center $
@@ -285,7 +278,6 @@ drawLoserScreen =
             str "     defeated.    ",
             str " Press 'q' to exit."
           ]
-
 
 -- Game Over
 drawGameOverScreen :: Widget Name
@@ -331,35 +323,38 @@ drawGameOverScreen =
               str "   |           ;                                              `.          /   ",
               str "   `.       _.'                                                 \"-.____.-'    ",
               str "     ~-----\"                                                                 "
-              
             ]
       )
 
-
 -- Create the map
 drawMap :: Game -> Widget Name
-drawMap g = vBox [createRow y g | y <- [0 .. gMapRows]]
+drawMap g = vBox [createRow y g | y <- [0 .. gMapRows - 1]]
 
 -- Create the row in map
 createRow :: Int -> Game -> Widget Name
 createRow y g =
-  let mapCells = [setAvailableSize (gRow2Col, 1) $ center $ createCell x y g | x <- [0 .. gMapCols]] -- 生成一行中的每个格子
+  let mapCells = [setAvailableSize (gRow2Col, 1) $ center $ createCell x y g | x <- [0 .. gMapCols - 1]] -- 生成一行中的每个格子
    in hBox mapCells
 
 -- Create cells in map
 createCell :: Int -> Int -> Game -> Widget Name
 createCell x y g =
-  case renderMountain x y g of
+  -- x and y are non-negative, need to be translated to world coordinate
+  case renderMountain wx wy g of
     Just mountainWidget -> mountainWidget
     Nothing ->
-      case renderMonster x y g of
+      case renderMonster wx wy g of
         Just w -> w
         Nothing ->
-          if (posX g == x) && (posY g == y)
+          if (posX g == wx) && (posY g == wy)
             then str "☺️" -- 用 "☺️" 表示玩家
-            else case getEvent x y g of
+            else case getEvent wx wy g of
               Nothing -> str " " -- 空白表示空单元格
-              Just e -> if isused e then str" " else icon e -- 用事件的图标表示事件
+              Just e -> if isused e then str " " else icon e -- 用事件的图标表示事件
+  where
+    (cx, cy) = getMapRegionCoord (posX g, posY g)
+    wx = x + cx * gMapCols
+    wy = y + cy * gMapRows
 
 -- Status Bar
 drawStatus :: Game -> Widget n
@@ -372,7 +367,7 @@ drawStatus g =
 
 -- Get current event
 getEvent :: Int -> Int -> Game -> Maybe GameEvent
-getEvent x y game = find (\e -> eventX e == x && eventY e == y) (events game)
+getEvent x y game = find (\e -> eventX e == x && eventY e == y) (getCurrentRegionEvents game)
 
 renderMountain :: Int -> Int -> Game -> Maybe (Widget Name)
 renderMountain x y game =
@@ -381,26 +376,29 @@ renderMountain x y game =
     else Nothing
 
 isMountainAt :: Int -> Int -> Game -> Bool
-isMountainAt x y game = any (\m -> mountainPosX m == x && mountainPosY m == y) (mountains game)
+isMountainAt x y game = any (\m -> mountainPosX m == x && mountainPosY m == y) (getCurrentRegionMountains game)
 
 -- Event Bar
 drawEvent :: Game -> Widget n
 drawEvent g =
   case inEvent g of
     Nothing -> str ""
-    (Just event) -> if isused event then str "" else 
-      str ("Event: " ++ name event)
-        <=> str (description event)
-        <=> vBox
-          [ ( if i == iChoice g
-                || (iChoice g < 0 && i == 0)
-                || (iChoice g >= length (choices event) && i == length (choices event) - 1)
-                then str "> "
-                else emptyWidget
-            )
-              <+> str ("Choice " ++ show (i + 1) ++ ": " ++ title (choices event !! i))
-            | i <- [0 .. length (choices event) - 1]
-          ]
+    (Just event) ->
+      if isused event
+        then str ""
+        else
+          str ("Event: " ++ name event)
+            <=> str (description event)
+            <=> vBox
+              [ ( if i == iChoice g
+                    || (iChoice g < 0 && i == 0)
+                    || (iChoice g >= length (choices event) && i == length (choices event) - 1)
+                    then str "> "
+                    else emptyWidget
+                )
+                  <+> str ("Choice " ++ show (i + 1) ++ ": " ++ title (choices event !! i))
+                | i <- [0 .. length (choices event) - 1]
+              ]
 
 -- debug logs
 drawLogs :: [String] -> Widget Name
@@ -408,55 +406,57 @@ drawLogs logs = vBox [str s | s <- logs]
 
 drawBattleScreen :: Game -> [Widget Name]
 drawBattleScreen game =
-    [ vBox [ hBox [playerWidget, padLeft (Pad 2) monsterWidget]
-           , hBorder
-           , statusAndEventInfoWidget
-           ]
-    ]
+  [ vBox
+      [ hBox [playerWidget, padLeft (Pad 2) monsterWidget],
+        hBorder,
+        statusAndEventInfoWidget
+      ]
+  ]
   where
-    playerText = unlines
-        [ "      _,."                      
-        , "    ,` -.)"                     
-        , "   ( _/-\\-._"                  
-        , "  /,|`--._,-^|            ,"    
-        , "  \\_| |`-._/||          ,'"    
-        , "    |  `-, / |         /  /"    
-        , "    |     || |        /  /"     
-        , "     `r-._||/   __   /  /"      
-        , " __,-<_     )`-/  `./  /"       
-        , "'  \\   `---'   \\   /  /"        
-        , "    |           |./  /"         
-        , "    /           //  /"          
-        , "\\_/' \\         |/  /"          
-        , " |    |   _,^-'/  /"            
-        , " |    , ``  (\\/  /_"            
-        , "  \\,.->._    \\X-=/^"             
-        , "  (  /   `-._//^`"               
-        , "   `Y-.____(__}"                 
-        , "    |     {__}"                
-        , "          ()"              
+    playerText =
+      unlines
+        [ "      _,.",
+          "    ,` -.)",
+          "   ( _/-\\-._",
+          "  /,|`--._,-^|            ,",
+          "  \\_| |`-._/||          ,'",
+          "    |  `-, / |         /  /",
+          "    |     || |        /  /",
+          "     `r-._||/   __   /  /",
+          " __,-<_     )`-/  `./  /",
+          "'  \\   `---'   \\   /  /",
+          "    |           |./  /",
+          "    /           //  /",
+          "\\_/' \\         |/  /",
+          " |    |   _,^-'/  /",
+          " |    , ``  (\\/  /_",
+          "  \\,.->._    \\X-=/^",
+          "  (  /   `-._//^`",
+          "   `Y-.____(__}",
+          "    |     {__}",
+          "          ()"
         ]
     playerWidget = strWrap playerText
 
-    monsterText = unlines
-        [ "·············▄▐·····"
-        , "·······▄▄▄··▄██▄····"
-        , "······▐▀█▀▌····▀█▄··"
-        , "······▐█▄█▌······▀█▄"
-        , "·······▀▄▀···▄▄▄▄▄▀▀"
-        , "·····▄▄▄██▀▀▀▀······"
-        , "····█▀▄▄▄█·▀▀·······"
-        , "····▌·▄▄▄▐▌▀▀▀······"
-        , "·▄·▐···▄▄·█·▀▀······"
-        , "·▀█▌···▄·▀█▀·▀······"
-        , "········▄▄▐▌▄▄······"
-        , "········▀███▀█·▄····"
-        , "·······▐▌▀▄▀▄▀▐▄····"
-        , "·······▐▀······▐▌···"
-        , "·······█········█···"
-        , "······▐▌·········█··"
+    monsterText =
+      unlines
+        [ "·············▄▐·····",
+          "·······▄▄▄··▄██▄····",
+          "······▐▀█▀▌····▀█▄··",
+          "······▐█▄█▌······▀█▄",
+          "·······▀▄▀···▄▄▄▄▄▀▀",
+          "·····▄▄▄██▀▀▀▀······",
+          "····█▀▄▄▄█·▀▀·······",
+          "····▌·▄▄▄▐▌▀▀▀······",
+          "·▄·▐···▄▄·█·▀▀······",
+          "·▀█▌···▄·▀█▀·▀······",
+          "········▄▄▐▌▄▄······",
+          "········▀███▀█·▄····",
+          "·······▐▌▀▄▀▄▀▐▄····",
+          "·······▐▀······▐▌···",
+          "·······█········█···",
+          "······▐▌·········█··"
         ]
     monsterWidget = strWrap monsterText
 
     statusAndEventInfoWidget = hBox [drawStatus game, padLeft (Pad 2) (drawEvent game)]
-
