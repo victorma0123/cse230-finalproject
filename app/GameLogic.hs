@@ -335,3 +335,24 @@ searchForSecretsChoice = GChoice
   { title = "Search for secret passages",
     effect = \game -> game -- Effect depends on how you want to handle map discovery
   }
+
+-- Final Confrontation: The Dark Overlord's Lair Event
+finalConfrontation :: GameEvent
+finalConfrontation = GEvent
+  { eventX = 18, 
+    eventY = 13,
+    name = "Final Confrontation: The Dark Overlord's Lair",
+    description = "You stand before the lair of the Dark Overlord, ready for the final battle.",
+    choices = [directAssaultChoice],
+    icon = str "D"
+  }
+
+directAssaultChoice :: EventChoice
+directAssaultChoice = GChoice
+  { title = "Direct assault",
+    effect = \game ->
+      if hp game >= 150 && shield game >= 20 && attack game >= 20 && sword game >= 15
+      then game {winner = True}
+      else game {loser = True}
+  }
+
