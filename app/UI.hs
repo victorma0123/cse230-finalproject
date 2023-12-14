@@ -55,11 +55,19 @@ markEventAsUsed evt g = insert key newEvents (eventsMap g)
     newEvents =
       map
         ( \e ->
-            if name e == name evt && eventX e == eventX evt && eventY e == eventY evt
+            if shouldMarkAsUsed e
               then e {isused = True}
               else e
         )
         (getCurrentRegionEvents g)
+    shouldMarkAsUsed e =
+      name e == name evt &&
+      eventX e == eventX evt &&
+      eventY e == eventY evt &&
+      not (isFinalConfrontation e)
+
+    isFinalConfrontation e = name e == "Final Confrontation: The Dark Overlord's Lair"
+
 
 -- Handling events
 
@@ -69,8 +77,11 @@ handleEvent g (VtyEvent (V.EvKey V.KEnter [])) = continue $
     Nothing -> g
     Just e ->
       let newGame = updateGameState $ effect (choices e !! iChoice g) g
+          updatedEventsMap = if isFinalConfrontation e
+                             then eventsMap g  -- 如果是 finalConfrontation，不更新 eventsMap
+                             else markEventAsUsed e newGame
        in newGame
-            { eventsMap = markEventAsUsed e g,
+            { eventsMap = updatedEventsMap,
               inEvent = case inMonster newGame of
                 Nothing -> Nothing
                 Just _ -> inEvent newGame
@@ -355,11 +366,19 @@ createCell x y g =
             then str "☺️" -- 用 "☺️" 表示玩家
             else case getEvent wx wy g of
               Nothing -> str " " -- 空白表示空单元格
-              Just e -> if isused e then str " " else icon e -- 用事件的图标表示事件
+              Just e -> if shouldDisplayEventIcon e then icon e else str " "
   where
     (cx, cy) = getMapRegionCoord (posX g, posY g)
     wx = x + cx * gMapCols
     wy = y + cy * gMapRows
+
+    shouldDisplayEventIcon :: GameEvent -> Bool
+    shouldDisplayEventIcon event = 
+      not (isused event) || isFinalConfrontation event
+
+    isFinalConfrontation :: GameEvent -> Bool
+    isFinalConfrontation event = 
+      name event == "Final Confrontation: The Dark Overlord's Lair"
 
 -- Status Bar
 drawStatus :: Game -> Widget n
@@ -388,22 +407,31 @@ drawEvent :: Game -> Widget n
 drawEvent g =
   case inEvent g of
     Nothing -> str ""
-    (Just event) ->
-      if isused event
-        then str ""
-        else
-          str ("Event: " ++ name event)
-            <=> str (description event)
-            <=> vBox
-              [ ( if i == iChoice g
-                    || (iChoice g < 0 && i == 0)
-                    || (iChoice g >= length (choices event) && i == length (choices event) - 1)
-                    then str "> "
-                    else emptyWidget
-                )
-                  <+> str ("Choice " ++ show (i + 1) ++ ": " ++ title (choices event !! i))
-                | i <- [0 .. length (choices event) - 1]
-              ]
+    Just event ->
+      if shouldDisplayEvent event
+      then
+        str ("Event: " ++ name event)
+          <=> str (description event)
+          <=> vBox
+            [ ( if i == iChoice g
+                  || (iChoice g < 0 && i == 0)
+                  || (iChoice g >= length (choices event) && i == length (choices event) - 1)
+                  then str "> "
+                  else emptyWidget
+              )
+                <+> str ("Choice " ++ show (i + 1) ++ ": " ++ title (choices event !! i))
+              | i <- [0 .. length (choices event) - 1]
+            ]
+      else str ""
+
+shouldDisplayEvent :: GameEvent -> Bool
+shouldDisplayEvent event = 
+  not (isused event) || isFinalConfrontation event
+
+isFinalConfrontation :: GameEvent -> Bool
+isFinalConfrontation event = 
+  name event == "Final Confrontation: The Dark Overlord's Lair"
+
 
 -- debug logs
 drawLogs :: [String] -> Widget Name
