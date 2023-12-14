@@ -32,7 +32,7 @@ sleepEvent =
             }
         ],
       icon = str "⏾"
-      ,isused = True
+      ,isused = False
     }
 
 -- Monster Encounter
