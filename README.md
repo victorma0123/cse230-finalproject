@@ -68,3 +68,8 @@ Run the built project:
 ```bash
 stack exec cse230
 ```
+
+or just run it 
+```bash
+stack run
+```
