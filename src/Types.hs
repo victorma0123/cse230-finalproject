@@ -33,7 +33,8 @@ data Game = Game
     inBattle :: Bool,
     logs :: [String],
     finalMonsterHp :: Int,
-    finalMonsterAttack :: Int
+    finalMonsterAttack :: Int,
+    animationFrame :: Int
   }
 
 data GameEvent = GEvent

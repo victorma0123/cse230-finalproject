@@ -51,8 +51,8 @@ initialState =
       mountainsMap =
         fromList
           [ ( (0, 0),
-              -- generateSpiralMountains 17 37
-              [Mountain 0 1]
+              generateSpiralMountains 17 37
+              --[Mountain 0 1]
             )
           ],
       winner = False,
@@ -62,7 +62,8 @@ initialState =
       inBattle = False,
       logs = [],
       finalMonsterHp = 150,
-      finalMonsterAttack = 20
+      finalMonsterAttack = 20,
+      animationFrame = 0
     }
 
 initialEvents :: [GameEvent]

@@ -31,11 +31,9 @@ app =
 main :: IO ()
 main = do
   eventChan <- newBChan 10
-
-  -- Set up a background process for periodically sending Tick events
   _ <- forkIO $ forever $ do
     writeBChan eventChan Tick
-    threadDelay 3000000  -- 3 second intervals, adjust as needed
+    threadDelay 900000  -- 0.5秒间隔
 
   let buildVty = V.mkVty V.defaultConfig
   initialVty <- buildVty

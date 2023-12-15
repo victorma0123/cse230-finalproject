@@ -117,7 +117,7 @@ handleEvent g (VtyEvent (V.EvKey (V.KChar char) [])) = continue $
     Nothing -> g
 -- Locking monster when meeting with player
 handleEvent g (AppEvent Tick) = do
-  -- Move monsters only if they are not in an event with the player
+  -- 移动怪物，只有当他们不在与玩家的事件中时
   newMonsters <-
     liftIO $
       mapM
@@ -127,13 +127,16 @@ handleEvent g (AppEvent Tick) = do
               else moveMonster m g
         )
         (getCurrentRegionMonsters g)
-  let updatedGame =
-        checkForEncounters
-          g
-            { monstersMap =
-                insert (getMapRegionCoord (posX g, posY g)) newMonsters (monstersMap g)
-            }
-  continue updatedGame
+
+  -- 更新游戏状态：怪物位置和动画帧
+  let updatedGame = g
+        { animationFrame = (animationFrame g + 1) `mod` totalFrames,
+          monstersMap = insert (getMapRegionCoord (posX g, posY g)) newMonsters (monstersMap g)
+        }
+  
+  continue $ checkForEncounters updatedGame
+  where
+    totalFrames = 4  -- 动画总帧数
 handleEvent g _ = continue g
 
 -- Helper function to move player and update battle state
@@ -243,7 +246,7 @@ getMonsterAt x y game = find (\m -> monsterPosX m == x && monsterPosY m == y) (g
 -- Generate the interface
 drawUI :: Game -> [Widget Name]
 drawUI g
-  | winner g = [drawWinnerScreen] -- Show winning screen if winner is True
+  | winner g = [drawWinnerScreen (animationFrame g)] -- Show winning screen if winner is True
   | loser g = [drawLoserScreen] -- Show losing screen if loser is True
   | gameOver g = [drawGameOverScreen]
   | inBattle g = drawBattleScreen g -- 如果在战斗中，显示战斗界面
@@ -264,20 +267,23 @@ drawUI g
                     ]
           ]
 
-drawWinnerScreen :: Widget Name
-drawWinnerScreen =
+drawWinnerScreen :: Int -> Widget Name
+drawWinnerScreen frame =
   center $
     withBorderStyle unicodeBold $
       borderWithLabel (str " Victory! ") $
         vBox
-          [ str "        ⭐         ",
-            str "       \\ | /       ",
-            str "        -O-        ",
-            str "       / | \\       ",
-            str "   Congratulations!",
-            str "       You won!    ",
-            str " Press 'q' to exit."
-          ]
+          [ str $ chooseString frame
+            -- ... 其他内容 ...
+       ]
+
+chooseString :: Int -> String
+chooseString frame = case frame `mod` 4 of
+  0 -> ascstring1
+  1 -> ascstring2
+  2 -> ascstring3
+  3 -> ascstring4
+  _ -> "string99"
 
 drawLoserScreen :: Widget Name
 drawLoserScreen =
@@ -493,3 +499,105 @@ drawBattleScreen game =
     monsterWidget = strWrap monsterText
 
     statusAndEventInfoWidget = hBox [drawStatus game, padLeft (Pad 2) (drawEvent game)]
+
+ascstring1 :: String
+ascstring1 = unlines
+    [ "             ,;~;,",
+      "                /\\_",
+      "               (  /",
+      "               (()      //)",
+      "               | \\\\  ,,;;'\\",
+      "           __ _(  )m=(((((((((((((================--------",
+      "         /'  ' '()/~' '.(, |",
+      "      ,;(      )||     |  ~",
+      "     ,;' \\    /-(.;,   )",
+      "          ) /       ) /",
+      "         //  PjP    ||",
+      "        )_\\         )_\\ -- Liangchun" ]
+
+ascstring2 :: String
+ascstring2 = unlines
+    [ "                                              ,--,  ,.-.",
+      "                ,                   \\,       '-,-`,','-.' | ._",
+      "               /|           \\    ,   |\\         }  )/  / `-,',",
+      "               [ '          |\\  /|   | |        /  \\|  |/`  ,'`",
+      "               | |       ,.`  `,` `, | |  _,...(   (      _',",
+      "                \\  \\  __ ,-` `  ,  , `/ |,'      Y     (   \\_L\\",
+      "                    \\  \\_\\,``,   ` , ,  /  |         )         _,/",
+      "                 \\  '  `  ,_ _`_,-,<._.<        /         /",
+      "                  ', `>.,`  `  `   ,., |_      |         /",
+      "                    \\/`  `,   `   ,`  | /__,.-`    _,   `\\",
+      "                -,-..\\  _  \\  `  /  ,  / `._) _,-\\`       \\",
+      "                 \\_,,.) /\\    ` /  / ) (-,, ``    ,        |",
+      "                ,` )  | \\_\\       '-`  |  `(               \\",
+      "               /  /```(   , --, ,' \\   |`<`    ,            |",
+      "              /  /_,--`\\   <\\  V /> ,` )<_/)  | \\      _____)",
+      "        ,-, ,`   `   (_,\\ \\    |   /) / __/  /   `----`",
+      "       (-, \\           ) \\ ('_.-._)/ /,`    /",
+      "       | /  `          `/ \\\\ V   V, /`     /",
+      "    ,--\\(        ,     <_/`\\\\     ||      /",
+      "   (   ,``-     \\/|         \\-A.A-`|     /",
+      "  ,>,_ )_,..(    )\\          -,,_-`  _--`",
+      " (_ \\|`   _,/_  /  \\_            ,--`",
+      "  \\( `   <.,../`     `-.._   _,-`",
+      "   `                      ```-- Fang" ]
+
+
+ascstring3 :: String
+ascstring3 = unlines
+    [ "                            ==(W{==========-      /===-                        ",
+      "                              ||  (.--.)         /===-_---~~~~~~~~~------____  ",
+      "                              | \\_,|**|,__      |===-~___                _,-' `",
+      "                 -==\\        `\\ ' `--'   ),    `//~\\   ~~~~`---.___.-~~      ",
+      "             ______-==|        /`\\_. .__/\\ \\    | |  \\\\           _-~`         ",
+      "       __--~~~  ,-/-==\\      (   | .  |~~~~|   | |   `\\        ,'             ",
+      "    _-~       /'    |  \\\\     )__/==0==-\\<>   / /      \\      /               ",
+      "  .'        /       |   \\\\      /~\\___/~~\\/  /' /        \\   /'                ",
+      " /  ____  /         |    \\`\\.__/-~~   \\  |_/'  /          \\/'                  ",
+      "/-'~    ~~~~~---__  |     ~-/~         ( )   /'        _--~`                   ",
+      "                  \\_|      /        _) | ;  ),   __--~~                        ",
+      "                    '~~--_/      _-~/- |/ \\   '-~ \\                            ",
+      "                   {\\__--_/}    / \\_>-|)<__\\      \\                           ",
+      "                   /'   (_/  _-~  | |__>--<__|      |                          ",
+      "                  |   _/) )-~     | |__>--<__|      |                          ",
+      "                  / /~ ,_/       / /__>---<__/      |                          ",
+      "                 o-o _//        /-~_>---<__-~      /                           ",
+      "                (^(~          /~_>---<__-      _-~                            ",
+      "               ,/|           /__>--<__/     _-~                               ",
+      "             ,//('(          |__>--<__|     /                   .----_          ",
+      "            ( ( '))          |__>--<__|    |                 /' _---_~\\        ",
+      "         `-)) )) (           |__>--<__|    |               /'  /     ~\\`\\      ",
+      "        ,/,'//( (             \\__>--<__\\    \\            /'  //        ||      ",
+      "      ,( ( ((, ))              ~-__>--<_~-_  ~--____---~' _/'/        /'       ",
+      "    `~/  )` ) ,/|                 ~-_~>--<_/-__       __-~ _/                  ",
+      "  ._-~//( )/ )) `                    ~~-'_/_/ /~~~~~~~__--~                    ",
+      "   ;'( ')/ ,)(                              ~~~~~~~~~~                         ",
+      "  ' ') '( (/                                                                    ",
+      "    '   '  `                                                                    -- dongming"
+    ]
+
+
+ascstring4 :: String
+ascstring4 = unlines
+    [ "                            _.--.",
+      "                        _.-'_:-'||",
+      "                    _.-'_.-::::'||",
+      "               _.-:'_.-::::::'  ||",
+      "             .'`-.-:::::::'     ||",
+      "            /.'`;|:::::::'      ||_",
+      "           ||   ||::::::'     _.;._'-._",
+      "           ||   ||:::::'  _.-!oo @.!-._'-.",
+      "           \'.  ||:::::.-!()oo @!()@.-'_.|",
+      "            '.'-;|:.-'.&$@.& ()$%-'o.' U||",
+      "              `>'-.!@%()@'@_%-'_.-o _.|'||",
+      "               ||-._'-.@.-'_.-' _.-o  |'||",
+      "               ||=[ '-._.-\\U/.-'    o |'||",
+      "               || '-.]=|| |'|      o  |'||",
+      "               ||      || |'|        _| ';",
+      "               ||      || |'|    _.-'_.-'",
+      "               |'-._   || |'|_.-'_.-'",
+      "      --zhiqiao '-._'-.|| |' `_.-'",
+      "                    '-.||_/.-'"
+    ]
+
+
