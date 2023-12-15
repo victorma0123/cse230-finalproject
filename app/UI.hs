@@ -389,7 +389,8 @@ createCell x y g =
 -- Status Bar
 drawStatus :: Game -> Widget n
 drawStatus g =
-  str ("Press 'q' to quit the game.\n\n")
+  str ("Press 'q' to quit the game.")
+    <=> str ("Position: (" ++ show (posX g) ++ ", " ++ show (posY g) ++ ")")
     <=> str ("Shield: " ++ show (shield g))
     <=> str ("Sword: " ++ show (sword g))
     <=> str ("HP: " ++ show (hp g))
