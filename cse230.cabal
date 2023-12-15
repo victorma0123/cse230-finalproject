@@ -27,6 +27,8 @@ library
   exposed-modules:
       Debug
       Events
+      GameLogic
+      Init
       Types
       Utils
   other-modules:
@@ -37,7 +39,8 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , base >=4.7 && <5
     , brick ==0.73
     , containers
     , linear
@@ -50,8 +53,6 @@ library
 executable cse230
   main-is: Main.hs
   other-modules:
-      GameLogic
-      Init
       UI
       Paths_cse230
   autogen-modules:
@@ -60,7 +61,8 @@ executable cse230
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , base >=4.7 && <5
     , brick ==0.73
     , containers
     , cse230
@@ -82,7 +84,8 @@ test-suite cse230-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      HUnit
+    , base >=4.7 && <5
     , brick ==0.73
     , containers
     , cse230

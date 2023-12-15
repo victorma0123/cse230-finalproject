@@ -28,6 +28,7 @@ dependencies:
   - linear
   - random
   - vty
+  - HUnit
 
 ghc-options:
   - -Wall
