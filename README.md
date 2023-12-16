@@ -73,3 +73,8 @@ or just run it
 ```bash
 stack run
 ```
+
+Test the built project:
+```bash
+stack test
+```
